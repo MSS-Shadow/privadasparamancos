@@ -62,7 +62,9 @@ const App = () => (
                 <Route path="/auth/reset-password" element={<ResetPassword />} />
                 <Route path="/" element={<Index />} />
                 <Route path="/tournaments" element={<Tournaments />} />
+                <Route path="/privadas" element={<Tournaments />} />
                 <Route path="/tournaments/:tournamentName" element={<TournamentDetail />} />
+                <Route path="/privadas/:tournamentName" element={<TournamentDetail />} />
                 <Route path="/tournament-history" element={<TournamentHistory />} />
                 <Route path="/rankings" element={<Rankings />} />
                 <Route path="/ranking" element={<Rankings />} />

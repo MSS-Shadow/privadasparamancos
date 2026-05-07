@@ -61,10 +61,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Gaming extras
-        "gaming-purple": "hsl(265 85% 65%)",
-        "gaming-cyan": "hsl(185 90% 55%)",
-        "gaming-pink": "hsl(330 85% 60%)",
+        // Tactical Warzone palette (aliases kept for backwards compatibility)
+        "tactical-green": "hsl(110 65% 48%)",
+        "tactical-orange": "hsl(22 95% 55%)",
+        "gaming-orange": "hsl(22 95% 55%)",
+        "gaming-purple": "hsl(110 65% 48%)",
+        "gaming-cyan": "hsl(110 70% 55%)",
+        "gaming-pink": "hsl(22 95% 55%)",
       },
       borderRadius: {
         lg: "var(--radius)",

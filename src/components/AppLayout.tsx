@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, Trophy, BarChart3, Users, User, Swords, CalendarDays,
-  Medal, Star, Megaphone, Shield, LogIn, Menu, X, Gamepad2
+  Medal, Star, Megaphone, Shield, LogIn, Menu, X, Crosshair
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -37,16 +37,16 @@ const prefetchRoute = (path: string) => {
 
 const navItems = [
   { label: "Inicio", path: "/", icon: Home },
-  { label: "Torneos", path: "/tournaments", icon: Trophy },
+  { label: "Privadas", path: "/tournaments", icon: Trophy },
   { label: "Rankings", path: "/rankings", icon: BarChart3 },
-  { label: "Equipos", path: "/teams", icon: Users },
+  { label: "Squads", path: "/teams", icon: Users },
   { label: "Jugadores", path: "/players", icon: User },
   { label: "Scrims", path: "/scrims", icon: Swords },
   { label: "Próximos", path: "/upcoming", icon: CalendarDays },
   { label: "Resultados", path: "/results", icon: Medal },
   { label: "Salón de la Fama", path: "/hall-of-fame", icon: Star },
   { label: "Anuncios", path: "/announcements", icon: Megaphone },
-  { label: "Creadores", path: "/creators", icon: Star },
+  { label: "Creators", path: "/creators", icon: Star },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -67,12 +67,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex flex-col w-[260px] border-r border-border/50 bg-sidebar fixed h-screen z-30">
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5 border-b border-border/50">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-gaming-cyan">
-            <Gamepad2 className="h-6 w-6 text-white" />
+          <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-tactical-orange">
+            <Crosshair className="h-6 w-6 text-background" />
           </div>
           <div>
-            <span className="font-bold text-xl font-display tracking-tight text-foreground">Game Master</span>
-            <p className="text-[10px] text-muted-foreground font-medium tracking-widest uppercase -mt-0.5">Organizers</p>
+            <span className="font-bold text-xl font-display tracking-tight text-foreground">Warzone Hub</span>
+            <p className="text-[10px] text-muted-foreground font-medium tracking-widest uppercase -mt-0.5">Private · LATAM</p>
           </div>
         </div>
 
@@ -143,10 +143,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-4 h-14">
           <Link to="/" className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-gaming-cyan">
-              <Gamepad2 className="h-5 w-5 text-white" />
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-tactical-orange">
+              <Crosshair className="h-5 w-5 text-background" />
             </div>
-            <span className="font-bold text-lg font-display tracking-tight text-foreground">Game Master</span>
+            <span className="font-bold text-lg font-display tracking-tight text-foreground">Warzone Hub</span>
           </Link>
 
           <div className="flex items-center gap-3">

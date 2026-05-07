@@ -102,17 +102,17 @@ export default function HomePage() {
   }, []);
 
   const statItems = [
-    { label: "Jugadores", value: stats.players, icon: Users, color: "from-primary to-gaming-pink", path: "/players" },
-    { label: "Clanes", value: stats.teams, icon: Crown, color: "from-gaming-cyan to-primary", path: "/teams" },
-    { label: "Torneos", value: stats.tournaments, icon: Trophy, color: "from-gaming-pink to-primary", path: "/tournaments" },
-    { label: "Scrims", value: stats.scrims, icon: Swords, color: "from-primary to-gaming-cyan", path: "/scrims" },
+    { label: "Operadores", value: stats.players, icon: Users, color: "from-primary to-tactical-orange", path: "/players" },
+    { label: "Squads", value: stats.teams, icon: Crown, color: "from-tactical-orange to-primary", path: "/teams" },
+    { label: "Privadas", value: stats.tournaments, icon: Trophy, color: "from-primary to-tactical-orange", path: "/tournaments" },
+    { label: "Scrims", value: stats.scrims, icon: Swords, color: "from-tactical-orange to-primary", path: "/scrims" },
   ];
 
   const quickLinks = [
-    { label: "Torneos", desc: "Compite y sube de ranking", path: "/tournaments", icon: Trophy },
-    { label: "Scrims", desc: "Practica con tu equipo", path: "/scrims", icon: Swords },
-    { label: "Rankings", desc: "Tabla de posiciones", path: "/rankings", icon: TrendingUp },
-    { label: "Equipos", desc: "Encuentra tu clan", path: "/teams", icon: Users },
+    { label: "Privadas", desc: "BR · Resurgimiento · Kill Race", path: "/tournaments", icon: Trophy },
+    { label: "Scrims", desc: "Entrena con tu squad", path: "/scrims", icon: Swords },
+    { label: "Rankings", desc: "Top operadores LATAM", path: "/rankings", icon: TrendingUp },
+    { label: "Squads", desc: "Encuentra tu escuadrón", path: "/teams", icon: Users },
   ];
 
   const activityIcon = (type: string) => {
@@ -147,35 +147,35 @@ export default function HomePage() {
         <div className="relative px-6 py-16 md:py-24 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
             <span className="live-dot" />
-            Plataforma competitiva oficial · Blood Strike LATAM
+            Hub competitivo oficial · Warzone LATAM
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black font-display gradient-text leading-[1.1] mb-4">
-            Compite. Verifícate.<br />Domina la región.
+            Las privadas más grandes<br />de Warzone LATAM.
           </h1>
 
           <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-8">
-            Torneos, scrims y rankings reales con <span className="text-foreground font-semibold">jugadores verificados manualmente</span>.
-            Sin smurfs, sin trampas, solo competencia de verdad.
+            Compite en <span className="text-foreground font-semibold">Battle Royale, Resurgimiento y Kill Race</span> junto a los mejores squads de la región.
+            Privadas, scrims y rankings con jugadores verificados manualmente.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
             {user ? (
               <>
                 <Link to="/scrims" className="glow-button px-8 py-3.5 rounded-xl text-primary-foreground font-semibold inline-flex items-center gap-2">
-                  <Radio className="h-5 w-5" /> Ver scrims activas
+                  <Radio className="h-5 w-5" /> Unirme a una privada
                 </Link>
                 <Link to="/verify-account" className="glass-card px-8 py-3.5 rounded-xl text-foreground font-semibold inline-flex items-center gap-2 hover:border-primary/30 transition-colors">
-                  <ShieldCheck className="h-5 w-5 text-accent" /> Verifica tu cuenta
+                  <ShieldCheck className="h-5 w-5 text-accent" /> Verificar cuenta
                 </Link>
               </>
             ) : (
               <>
                 <Link to="/auth" className="glow-button px-8 py-3.5 rounded-xl text-primary-foreground font-semibold inline-flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5" /> Únete y verifica tu cuenta
+                  <ShieldCheck className="h-5 w-5" /> Crear squad y competir
                 </Link>
                 <Link to="/scrims" className="glass-card px-8 py-3.5 rounded-xl text-foreground font-semibold inline-flex items-center gap-2 hover:border-primary/30 transition-colors">
-                  <Radio className="h-5 w-5 text-gaming-pink" /> Ver scrims activas
+                  <Radio className="h-5 w-5 text-tactical-orange" /> Ver privadas activas
                 </Link>
               </>
             )}
@@ -211,7 +211,7 @@ export default function HomePage() {
       <section>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-2xl font-bold font-display text-foreground flex items-center gap-2">
-            <span className="live-dot" /> En vivo ahora
+            <span className="live-dot" /> Operación en curso
           </h2>
           <Link to="/scrims" className="text-sm text-primary hover:underline flex items-center gap-1">
             Ver todas <ChevronRight className="h-4 w-4" />
@@ -221,7 +221,7 @@ export default function HomePage() {
         <div className="grid lg:grid-cols-3 gap-4">
           {/* Live scrims */}
           <div className="glass-card p-5 lg:col-span-2">
-            <h3 className="text-sm font-semibold text-gaming-pink uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-tactical-orange uppercase tracking-wider mb-3 flex items-center gap-2">
               <Radio className="h-4 w-4 animate-pulse" /> Scrims en vivo
             </h3>
             {liveScrims.length > 0 ? (
@@ -233,7 +233,7 @@ export default function HomePage() {
                     className="flex items-center justify-between p-3 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition-colors group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="px-2 py-0.5 rounded-md bg-gaming-pink/20 text-gaming-pink text-[10px] font-bold flex items-center gap-1 shrink-0">
+                      <span className="px-2 py-0.5 rounded-md bg-tactical-orange/20 text-tactical-orange text-[10px] font-bold flex items-center gap-1 shrink-0">
                         <span className="live-dot" /> LIVE
                       </span>
                       <div className="min-w-0">
@@ -253,7 +253,7 @@ export default function HomePage() {
           {/* Upcoming tournaments */}
           <div className="glass-card p-5">
             <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Calendar className="h-4 w-4" /> Próximos torneos
+              <Calendar className="h-4 w-4" /> Próximas privadas
             </h3>
             {upcomingTournaments.length > 0 ? (
               <div className="space-y-2">
@@ -280,7 +280,7 @@ export default function HomePage() {
       {/* Quick links */}
       <section>
         <h2 className="text-2xl font-bold font-display text-foreground mb-5 flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary" /> Acceso Rápido
+          <Zap className="h-6 w-6 text-primary" /> Operaciones rápidas
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickLinks.map((link) => (
@@ -301,7 +301,7 @@ export default function HomePage() {
       {/* Activity feed */}
       <section>
         <h2 className="text-2xl font-bold font-display text-foreground mb-5 flex items-center gap-2">
-          <Activity className="h-6 w-6 text-accent" /> Actividad reciente
+          <Activity className="h-6 w-6 text-accent" /> Kill feed reciente
         </h2>
         {activity.length > 0 ? (
           <div className="glass-card divide-y divide-border/50">
@@ -334,7 +334,7 @@ export default function HomePage() {
       <section>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-2xl font-bold font-display text-foreground flex items-center gap-2">
-            <Megaphone className="h-6 w-6 text-gaming-cyan" /> Últimas Noticias
+            <Megaphone className="h-6 w-6 text-tactical-orange" /> Briefing oficial
           </h2>
           <Link to="/announcements" className="text-sm text-primary hover:underline flex items-center gap-1">
             Ver todas <ChevronRight className="h-4 w-4" />
@@ -371,48 +371,48 @@ export default function HomePage() {
       {/* SEO indexable content */}
       <section className="glass-card p-8 space-y-6">
         <h2 className="text-2xl font-bold font-display gradient-text">
-          La plataforma competitiva #1 de Blood Strike LATAM
+          El hub competitivo #1 de Warzone LATAM
         </h2>
         <div className="grid md:grid-cols-3 gap-6 text-sm text-muted-foreground leading-relaxed">
           <article>
-            <h3 className="text-foreground font-semibold mb-2">Scrims de Blood Strike</h3>
+            <h3 className="text-foreground font-semibold mb-2">Privadas de Warzone</h3>
             <p>
-              Plataforma de <strong>scrims Blood Strike</strong> donde practicas con tu equipo en lobbies organizados,
-              con horarios fijos y modos Solo, Dúo, Trío y Squad. <Link to="/scrims" className="text-primary hover:underline">Ver scrims disponibles</Link>.
+              Únete a <strong>privadas Warzone</strong> de Battle Royale, Resurgimiento y Kill Race con lobbies
+              personalizados, reglas claras y check-in competitivo. <Link to="/tournaments" className="text-primary hover:underline">Ver privadas activas</Link>.
             </p>
           </article>
           <article>
-            <h3 className="text-foreground font-semibold mb-2">Torneos automáticos</h3>
+            <h3 className="text-foreground font-semibold mb-2">Scrims competitivas</h3>
             <p>
-              Participa en <strong>torneos Blood Strike</strong> organizados automáticamente con brackets de 8, 16 y 32 equipos,
-              sistema de puntos configurable y waitlist. <Link to="/tournaments" className="text-primary hover:underline">Inscribirme a un torneo</Link>.
+              Practica con tu squad en <strong>scrims Warzone</strong> organizadas por creadores y casters verificados,
+              con waitlist automática y puntos configurables. <Link to="/scrims" className="text-primary hover:underline">Ver scrims disponibles</Link>.
             </p>
           </article>
           <article>
             <h3 className="text-foreground font-semibold mb-2">Jugadores verificados</h3>
             <p>
-              Todos los participantes pasan por un sistema de <strong>jugadores verificados Blood Strike</strong> con validación
-              de Player ID para garantizar fair play y combatir el smurfing. <Link to="/players" className="text-primary hover:underline">Ver jugadores</Link>.
+              Todos los operadores pasan por un sistema de <strong>verificación manual</strong> con validación de
+              Activision ID para garantizar fair play y combatir el smurfing. <Link to="/players" className="text-primary hover:underline">Ver operadores</Link>.
             </p>
           </article>
           <article>
-            <h3 className="text-foreground font-semibold mb-2">Clanes Blood Strike</h3>
+            <h3 className="text-foreground font-semibold mb-2">Squads y clanes</h3>
             <p>
-              Crea o únete a <strong>clanes Blood Strike</strong> con perfiles públicos, sistema de solicitudes
-              y requisitos por torneo. <Link to="/teams" className="text-primary hover:underline">Explorar clanes</Link>.
+              Crea o únete a <strong>squads Warzone</strong> con perfiles públicos, KD promedio, historial competitivo
+              y requisitos por privada. <Link to="/teams" className="text-primary hover:underline">Explorar squads</Link>.
             </p>
           </article>
           <article>
             <h3 className="text-foreground font-semibold mb-2">Ranking competitivo</h3>
             <p>
-              Sigue el <strong>ranking Blood Strike</strong> LATAM basado en victorias reales en torneos oficiales.
+              Sigue el <strong>ranking Warzone LATAM</strong> por modo: BR Squad, Trio, Resurgimiento y Kill Race.
               <Link to="/rankings" className="text-primary hover:underline"> Ver tabla de posiciones</Link>.
             </p>
           </article>
           <article>
             <h3 className="text-foreground font-semibold mb-2">Comunidad LATAM</h3>
             <p>
-              Game Master Organizers conecta a la escena competitiva de Blood Strike en LATAM y Brasil con
+              Warzone Private Hub conecta la escena competitiva de Call of Duty: Warzone en LATAM y Brasil con
               moderación activa, anti-cheat y soporte 24/7.
             </p>
           </article>
