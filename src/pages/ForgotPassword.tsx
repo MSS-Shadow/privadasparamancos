@@ -15,19 +15,20 @@ export default function ForgotPassword() {
     if (!email) return toast.error("Por favor ingresa tu email");
 
     setLoading(true);
-    console.log("Enviando recuperación a:", email);
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-
-    setLoading(false);
-
-    if (error) {
-      console.error("Error:", error);
-      toast.error("No se pudo enviar el email. " + error.message);
-    } else {
-      toast.success("✅ Link de recuperación enviado. Revisa tu email (incluido Spam).");
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (error) {
+        toast.error("No se pudo enviar el email. " + error.message);
+      } else {
+        toast.success("✅ Link de recuperación enviado. Revisa tu email (incluido Spam).");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Error inesperado");
+    } finally {
+      setLoading(false);
+    }
     }
   };
 
