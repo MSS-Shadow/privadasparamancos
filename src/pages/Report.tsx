@@ -32,31 +32,35 @@ export default function ReportPage() {
       return;
     }
     setSubmitting(true);
+    try {
+      let screenshotUrl: string | null = null;
+      if (file) {
+        const ext = file.name.split(".").pop();
+        const path = `reports/${user.id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("uploads").upload(path, file);
+        if (uploadErr) { toast.error("Error subiendo archivo"); return; }
+        const { data: { publicUrl } } = supabase.storage.from("uploads").getPublicUrl(path);
+        screenshotUrl = publicUrl;
+      }
 
-    let screenshotUrl: string | null = null;
-    if (file) {
-      const ext = file.name.split(".").pop();
-      const path = `reports/${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from("uploads").upload(path, file);
-      if (uploadErr) { toast.error("Error subiendo archivo"); setSubmitting(false); return; }
-      const { data: { publicUrl } } = supabase.storage.from("uploads").getPublicUrl(path);
-      screenshotUrl = publicUrl;
+      const { error } = await supabase.from("reports").insert({
+        reporter_user_id: user.id,
+        reporter_nickname: profile.nickname,
+        reported_player: form.reported_player,
+        category: form.category,
+        description: form.description,
+        screenshot_url: screenshotUrl,
+      });
+
+      if (error) { toast.error(error.message); return; }
+      toast.success("Reporte enviado correctamente");
+      setForm({ reported_player: "", category: "", description: "" });
+      setFile(null);
+    } catch (e: any) {
+      toast.error(e?.message || "Error inesperado");
+    } finally {
+      setSubmitting(false);
     }
-
-    const { error } = await supabase.from("reports").insert({
-      reporter_user_id: user.id,
-      reporter_nickname: profile.nickname,
-      reported_player: form.reported_player,
-      category: form.category,
-      description: form.description,
-      screenshot_url: screenshotUrl,
-    });
-
-    setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Reporte enviado correctamente");
-    setForm({ reported_player: "", category: "", description: "" });
-    setFile(null);
   };
 
   return (
