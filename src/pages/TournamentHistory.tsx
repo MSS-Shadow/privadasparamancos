@@ -77,7 +77,7 @@ export default function TournamentHistoryPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-1">Historial de Torneos</h1>
-        <p className="text-muted-foreground">Evidencia pública de torneos competitivos realizados por Game Master Organizers.</p>
+        <p className="text-muted-foreground">Resultados pasados de las privadas que organizamos en Privadas para Mancos.</p>
       </div>
 
       {/* Filters */}

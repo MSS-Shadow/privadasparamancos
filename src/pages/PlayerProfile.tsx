@@ -168,7 +168,7 @@ export default function PlayerProfile() {
       {/* Featured stats */}
       <div className="glass-card p-6">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-          <Target className="h-4 w-4 text-primary" /> Estadísticas competitivas
+          <Target className="h-4 w-4 text-primary" /> Estadísticas de cuenta
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 p-4 text-center">
@@ -223,7 +223,7 @@ export default function PlayerProfile() {
       {recentTournaments.length > 0 && (
         <div className="glass-card p-6">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-primary" /> Historial competitivo
+            <Trophy className="h-4 w-4 text-primary" /> Historial en privadas
           </h3>
           <div className="space-y-2">
             {recentTournaments.map((r: any) => {

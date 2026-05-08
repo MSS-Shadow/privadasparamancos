@@ -78,7 +78,7 @@ export default function VerifyAccountPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Verificar Cuenta</h1>
-          <p className="text-sm text-muted-foreground">Sube capturas para obtener la insignia de Jugador Verificado.</p>
+          <p className="text-sm text-muted-foreground">Sube capturas para obtener la insignia de Cuenta Verificada (KD revisado).</p>
         </div>
       </div>
 
@@ -95,7 +95,7 @@ export default function VerifyAccountPage() {
         </div>
 
         <div>
-          <label className="text-sm text-muted-foreground mb-1 block">Captura del Perfil de BloodStrike *</label>
+          <label className="text-sm text-muted-foreground mb-1 block">Captura de tu perfil de Warzone (con stats y KD) *</label>
           <Input type="file" accept=".png,.jpg,.jpeg,.pdf" onChange={(e) => setProfileScreenshot(e.target.files?.[0] || null)} />
         </div>
         <div>

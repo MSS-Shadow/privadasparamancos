@@ -164,7 +164,7 @@ export default function ScrimsPage() {
         <div className="relative px-6 py-10 md:py-14 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-gaming-cyan/10 border border-gaming-cyan/20 text-gaming-cyan text-sm font-medium">
-              <Swords className="h-4 w-4" /> Práctica competitiva
+              <Swords className="h-4 w-4" /> Calentamiento casual
             </div>
             <h1 className="text-4xl md:text-6xl font-black font-display gradient-text leading-[1.1] mb-2">Scrims</h1>
             <p className="text-muted-foreground text-lg">Partidas de práctica organizadas por creadores y admins.</p>

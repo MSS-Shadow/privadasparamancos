@@ -60,13 +60,13 @@ export default function TournamentsPage() {
         <div className="absolute top-0 right-1/4 w-80 h-80 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="relative px-6 py-12 md:py-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
-            <Trophy className="h-4 w-4" /> Competición oficial
+            <Trophy className="h-4 w-4" /> Privadas para mancos
           </div>
           <h1 className="text-4xl md:text-6xl font-black font-display gradient-text leading-[1.1] mb-3">
             Torneos
           </h1>
           <p className="text-muted-foreground text-lg max-w-xl">
-            Compite, mejora y demuestra tu nivel en BloodStrike LATAM.
+            Pasa el rato en privadas casuales y justas de Warzone LATAM. Sin tryhards.
           </p>
         </div>
       </section>

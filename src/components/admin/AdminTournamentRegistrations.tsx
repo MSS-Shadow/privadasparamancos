@@ -200,7 +200,7 @@ export default function AdminTournamentRegistrations() {
           <div className="space-y-3">
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Nombre</label>
-              <Input value={newTournament.name} onChange={(e) => setNewTournament({ ...newTournament, name: e.target.value })} placeholder="BloodStrike Open #5" />
+              <Input value={newTournament.name} onChange={(e) => setNewTournament({ ...newTournament, name: e.target.value })} placeholder="Privadas para Mancos #5" />
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Modo</label>

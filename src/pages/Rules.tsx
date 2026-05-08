@@ -3,10 +3,10 @@ export default function RulesPage() {
     {
       title: "Reglas Generales",
       items: [
-        "Todos los jugadores deben registrarse con su Player ID válido de BloodStrike.",
+        "Todos los jugadores deben registrarse con su Activision ID válido de Warzone.",
         "Una cuenta por jugador. Las cuentas duplicadas serán marcadas y podrían ser baneadas.",
         "Se espera un comportamiento respetuoso en todo momento. La conducta tóxica resultará en advertencias o baneos.",
-        "Todas las decisiones de los administradores de Game Master son definitivas.",
+        "Todas las decisiones de los administradores de Privadas para Mancos son definitivas.",
       ],
     },
     {
@@ -32,7 +32,7 @@ export default function RulesPage() {
       title: "Fair Play",
       items: [
         "El uso de cheats, hacks o exploits está estrictamente prohibido.",
-        "Cualquier jugador atrapado haciendo trampa será baneado permanentemente de todos los eventos Game Master.",
+        "Cualquier jugador atrapado haciendo trampa será baneado permanentemente de todos los eventos de Privadas para Mancos.",
         "No se permite el teaming en partidas solo.",
         "Los jugadores deben usar la misma cuenta registrada en la plataforma.",
       ],
@@ -43,7 +43,7 @@ export default function RulesPage() {
     <div className="space-y-8 max-w-3xl">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-1">Reglas</h1>
-        <p className="text-muted-foreground">Reglas oficiales para todos los eventos Game Master.</p>
+        <p className="text-muted-foreground">Reglas de la casa para todos los eventos de Privadas para Mancos.</p>
       </div>
 
       {rules.map((section, i) => (

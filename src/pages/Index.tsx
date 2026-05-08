@@ -147,7 +147,7 @@ export default function HomePage() {
         <div className="relative px-6 py-16 md:py-24 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
             <span className="live-dot" />
-            Hub competitivo oficial · Warzone LATAM
+            Privadas para mancos · Warzone LATAM · Sin tryhards
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black font-display gradient-text leading-[1.1] mb-4">
@@ -334,7 +334,7 @@ export default function HomePage() {
       <section>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-2xl font-bold font-display text-foreground flex items-center gap-2">
-            <Megaphone className="h-6 w-6 text-tactical-orange" /> Briefing oficial
+            <Megaphone className="h-6 w-6 text-tactical-orange" /> Avisos de la comunidad
           </h2>
           <Link to="/announcements" className="text-sm text-primary hover:underline flex items-center gap-1">
             Ver todas <ChevronRight className="h-4 w-4" />
@@ -371,20 +371,20 @@ export default function HomePage() {
       {/* SEO indexable content */}
       <section className="glass-card p-8 space-y-6">
         <h2 className="text-2xl font-bold font-display gradient-text">
-          El hub competitivo #1 de Warzone LATAM
+          Privadas para Mancos · Warzone LATAM sin tryhards
         </h2>
         <div className="grid md:grid-cols-3 gap-6 text-sm text-muted-foreground leading-relaxed">
           <article>
             <h3 className="text-foreground font-semibold mb-2">Privadas de Warzone</h3>
             <p>
               Únete a <strong>privadas Warzone</strong> de Battle Royale, Resurgimiento y Kill Race con lobbies
-              personalizados, reglas claras y check-in competitivo. <Link to="/tournaments" className="text-primary hover:underline">Ver privadas activas</Link>.
+              personalizados, reglas claras y check-in justo. <Link to="/tournaments" className="text-primary hover:underline">Ver privadas activas</Link>.
             </p>
           </article>
           <article>
-            <h3 className="text-foreground font-semibold mb-2">Scrims competitivas</h3>
+            <h3 className="text-foreground font-semibold mb-2">Scrims relajadas</h3>
             <p>
-              Practica con tu squad en <strong>scrims Warzone</strong> organizadas por creadores y casters verificados,
+              Practica con tu squad en <strong>scrims casuales Warzone</strong> organizadas por creadores y casters verificados,
               con waitlist automática y puntos configurables. <Link to="/scrims" className="text-primary hover:underline">Ver scrims disponibles</Link>.
             </p>
           </article>
@@ -403,7 +403,7 @@ export default function HomePage() {
             </p>
           </article>
           <article>
-            <h3 className="text-foreground font-semibold mb-2">Ranking competitivo</h3>
+            <h3 className="text-foreground font-semibold mb-2">Ranking de la comunidad</h3>
             <p>
               Sigue el <strong>ranking Warzone LATAM</strong> por modo: BR Squad, Trio, Resurgimiento y Kill Race.
               <Link to="/rankings" className="text-primary hover:underline"> Ver tabla de posiciones</Link>.
@@ -412,7 +412,7 @@ export default function HomePage() {
           <article>
             <h3 className="text-foreground font-semibold mb-2">Comunidad LATAM</h3>
             <p>
-              Warzone Private Hub conecta la escena competitiva de Call of Duty: Warzone en LATAM y Brasil con
+              Privadas para Mancos conecta la escena casual y comunitaria de Call of Duty: Warzone en LATAM y Brasil con
               moderación activa, anti-cheat y soporte 24/7.
             </p>
           </article>

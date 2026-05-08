@@ -143,7 +143,7 @@ export default function ProfilePage() {
 
         {/* Player ID */}
         <div>
-          <label className="text-sm text-muted-foreground">Player ID (BloodStrike)</label>
+          <label className="text-sm text-muted-foreground">Activision ID</label>
           <Input
             value={form.player_id}
             onChange={(e) => set("player_id", e.target.value)}

@@ -27,7 +27,7 @@ export default function AnnouncementsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-1">Anuncios</h1>
-        <p className="text-muted-foreground">Noticias y actualizaciones de Game Master Organizers.</p>
+        <p className="text-muted-foreground">Noticias y actualizaciones de Privadas para Mancos.</p>
       </div>
 
       {announcements.length > 0 ? (

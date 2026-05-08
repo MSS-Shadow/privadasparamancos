@@ -64,7 +64,7 @@ export default function RankingsPage() {
         <div className="absolute top-0 left-1/4 w-80 h-80 bg-gaming-pink/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="relative px-6 py-10 md:py-14">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-gaming-pink/10 border border-gaming-pink/20 text-gaming-pink text-sm font-medium">
-            <TrendingUp className="h-4 w-4" /> Tabla competitiva
+            <TrendingUp className="h-4 w-4" /> Ranking de la comunidad
           </div>
           <h1 className="text-4xl md:text-6xl font-black font-display gradient-text leading-[1.1] mb-2">Rankings</h1>
           <p className="text-muted-foreground text-lg">Clasificación por campeonatos ganados en cada modo.</p>

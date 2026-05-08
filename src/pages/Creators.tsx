@@ -63,7 +63,7 @@ export default function CreatorsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-1">Creadores de Contenido</h1>
-        <p className="text-muted-foreground">Creadores de contenido de la comunidad BloodStrike.</p>
+        <p className="text-muted-foreground">Creadores de contenido de la comunidad Warzone LATAM.</p>
       </div>
 
       {creators.length > 0 ? (

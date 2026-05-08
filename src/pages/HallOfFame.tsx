@@ -17,7 +17,7 @@ export default function HallOfFamePage() {
         <Star className="h-6 w-6 text-primary" />
         <div>
           <h1 className="text-3xl font-bold text-foreground">Salón de la Fama</h1>
-          <p className="text-muted-foreground">Campeones históricos de los torneos Game Master.</p>
+          <p className="text-muted-foreground">Campeones históricos de los eventos de Privadas para Mancos.</p>
         </div>
       </div>
 
