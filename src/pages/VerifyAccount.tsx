@@ -38,32 +38,36 @@ export default function VerifyAccountPage() {
       return;
     }
     setSubmitting(true);
+    try {
+      const [profileUrl, idUrl, additionalUrl] = await Promise.all([
+        uploadFile(profileScreenshot, "verification"),
+        uploadFile(idScreenshot, "verification"),
+        additionalDoc ? uploadFile(additionalDoc, "verification") : Promise.resolve(null),
+      ]);
 
-    const [profileUrl, idUrl, additionalUrl] = await Promise.all([
-      uploadFile(profileScreenshot, "verification"),
-      uploadFile(idScreenshot, "verification"),
-      additionalDoc ? uploadFile(additionalDoc, "verification") : Promise.resolve(null),
-    ]);
+      if (!profileUrl || !idUrl) { toast.error("Error subiendo archivos"); return; }
 
-    if (!profileUrl || !idUrl) { toast.error("Error subiendo archivos"); setSubmitting(false); return; }
+      const { error } = await supabase.from("verification_requests").insert({
+        user_id: user.id,
+        nickname: profile.nickname,
+        player_id: profile.player_id,
+        email: profile.email,
+        profile_screenshot_url: profileUrl,
+        id_screenshot_url: idUrl,
+        additional_doc_url: additionalUrl,
+      });
 
-    const { error } = await supabase.from("verification_requests").insert({
-      user_id: user.id,
-      nickname: profile.nickname,
-      player_id: profile.player_id,
-      email: profile.email,
-      profile_screenshot_url: profileUrl,
-      id_screenshot_url: idUrl,
-      additional_doc_url: additionalUrl,
-    });
-
-    setSubmitting(false);
-    if (error) {
-      if (error.code === "23505") toast.error("Ya tienes una solicitud de verificación pendiente");
-      else toast.error(error.message);
-      return;
+      if (error) {
+        if (error.code === "23505") toast.error("Ya tienes una solicitud de verificación pendiente");
+        else toast.error(error.message);
+        return;
+      }
+      toast.success("Solicitud de verificación enviada");
+    } catch (e: any) {
+      toast.error(e?.message || "Error inesperado");
+    } finally {
+      setSubmitting(false);
     }
-    toast.success("Solicitud de verificación enviada");
   };
 
   return (
