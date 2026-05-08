@@ -398,7 +398,7 @@ export default function HomePage() {
           <article>
             <h3 className="text-foreground font-semibold mb-2">Squads y clanes</h3>
             <p>
-              Crea o únete a <strong>squads Warzone</strong> con perfiles públicos, KD promedio, historial competitivo
+              Crea o únete a <strong>squads Warzone</strong> con perfiles públicos, KD promedio, historial en privadas
               y requisitos por privada. <Link to="/teams" className="text-primary hover:underline">Explorar squads</Link>.
             </p>
           </article>

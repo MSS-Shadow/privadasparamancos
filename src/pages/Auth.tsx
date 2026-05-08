@@ -168,7 +168,7 @@ export default function Auth() {
   };
 
   const stepCopy: Record<1 | 2 | 3, { title: string; subtitle: string }> = {
-    1: { title: "Crea tu cuenta", subtitle: "Tu acceso al comunidad casual de Warzone LATAM. Sin tryhards: verificamos cada cuenta para mantener lobbies justos." },
+    1: { title: "Crea tu cuenta", subtitle: "Tu acceso a la comunidad casual de Warzone LATAM. Sin tryhards: verificamos cada cuenta para mantener lobbies justos." },
     2: { title: "Datos de jugador", subtitle: "Verificamos manualmente cada jugador para mantener una competencia real y segura." },
     3: { title: "Tu equipo", subtitle: "¿Ya tienes clan? Puedes pedir unirte ahora o hacerlo después." },
   };

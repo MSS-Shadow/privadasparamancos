@@ -7,7 +7,7 @@ export default function AboutPage() {
         <h1 className="text-3xl font-bold text-foreground mb-2">Acerca de Privadas para Mancos</h1>
         <p className="text-muted-foreground leading-relaxed">
           Privadas para Mancos es el punto de encuentro de la comunidad casual de Warzone LATAM.
-          Organizamos torneos, scrims y mantenemos rankings para la creciente escena competitiva.
+          Organizamos torneos, scrims y mantenemos rankings para la creciente comunidad casual.
         </p>
       </div>
 
@@ -31,7 +31,7 @@ export default function AboutPage() {
       <div className="bg-card border border-border rounded-lg p-6">
         <h2 className="text-xl font-semibold text-foreground mb-3">Nuestra Misión</h2>
         <p className="text-muted-foreground leading-relaxed">
-          Construir una plataforma casual y justa que le dé un hogar a cada jugador de BloodStrike —
+          Construir una plataforma casual y justa que le dé un hogar a cada jugador de Warzone LATAM —
           desde competidores casuales hasta equipos serios. Cada partida importa. La historia de cada jugador cuenta.
         </p>
       </div>
