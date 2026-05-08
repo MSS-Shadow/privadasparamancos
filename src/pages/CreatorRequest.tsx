@@ -44,17 +44,22 @@ export default function CreatorRequest() {
     if (!user || !profile) return;
     if (!form.channel_link.trim()) { toast.error("El link del canal es obligatorio"); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("creator_requests").insert({
-      user_id: user.id,
-      nickname: profile.nickname,
-      email: profile.email,
-      platform: form.platform,
-      channel_link: form.channel_link.trim(),
-    });
-    setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("¡Solicitud enviada!");
-    setHasRequest(true);
+    try {
+      const { error } = await supabase.from("creator_requests").insert({
+        user_id: user.id,
+        nickname: profile.nickname,
+        email: profile.email,
+        platform: form.platform,
+        channel_link: form.channel_link.trim(),
+      });
+      if (error) { toast.error(error.message); return; }
+      toast.success("¡Solicitud enviada!");
+      setHasRequest(true);
+    } catch (e: any) {
+      toast.error(e?.message || "Error inesperado");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
