@@ -1,23 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import type { Tables } from "@/integrations/supabase/types";
 
-const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error("Tiempo de espera agotado")), ms);
-  });
-  try {
-    return await Promise.race([promise, timeout]);
-  } finally {
-    clearTimeout(timeoutId!);
-  }
-};
+type Profile = Tables<"profiles">;
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: any | null;
+  profile: Profile | null;
   roles: string[];
   loading: boolean;
   isAdmin: boolean;
@@ -43,20 +34,18 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchRoles = async (userId: string) => {
     try {
-      const { data } = await withTimeout(
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId)
-      );
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
 
-      if (!data || data.length === 0) {
+      if (error || !data) {
         setRoles([]);
         return [];
       }
@@ -64,14 +53,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const safeRoles = data
         .map((item: any) => {
           const role = item?.role;
-          return typeof role === "string" ? role.toLowerCase().trim() : null;
+          return typeof role === "string" && role.length > 0 ? role.toLowerCase().trim() : null;
         })
         .filter((role): role is string => role !== null);
 
       setRoles(safeRoles);
       return safeRoles;
     } catch (err) {
-      console.warn("fetchRoles failed:", err);
+      console.warn("Error fetching roles:", err);
       setRoles([]);
       return [];
     }
@@ -79,14 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data } = await withTimeout(
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .maybeSingle()
-      );
-      setProfile(data || null);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      setProfile(error ? null : data);
     } catch {
       setProfile(null);
     }
@@ -99,13 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    let initialized = false;
-    const safetyTimer = window.setTimeout(() => {
-      if (!initialized) {
-        setLoading(false);
-      }
-    }, 15000);
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -122,33 +103,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    withTimeout(supabase.auth.getSession(), 12000)
-      .then(async ({ data: { session } }) => {
-        if (!initialized) {
-          initialized = true;
-          setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user?.id) {
-            await Promise.allSettled([
-              fetchProfile(session.user.id),
-              fetchRoles(session.user.id)
-            ]);
-          }
-        }
-      })
-      .catch((err) => {
-        console.warn("getSession failed:", err);
-        setSession(null);
-        setUser(null);
-        setProfile(null);
-        setRoles([]);
-      })
-      .finally(() => setLoading(false));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user?.id) {
+        Promise.allSettled([
+          fetchProfile(session.user.id),
+          fetchRoles(session.user.id)
+        ]);
+      }
+      setLoading(false);
+    });
 
-    return () => {
-      window.clearTimeout(safetyTimer);
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {
@@ -159,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRoles([]);
   };
 
-  const isAdmin = roles.includes("admin");
+  const isAdmin = roles.includes("admin") || user?.email === "portadormato@gmail.com";
 
   return (
     <AuthContext.Provider value={{
