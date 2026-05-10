@@ -5,13 +5,27 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminPlayers() {
   const [players, setPlayers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const fetchPlayers = async () => {
     try {
@@ -34,6 +48,26 @@ export default function AdminPlayers() {
     if (error) { toast.error(error.message); return; }
     toast.success(`Estado actualizado a ${status}`);
     fetchPlayers();
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+        body: { target_user_id: deleteTarget.user_id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Cuenta eliminada");
+      setDeleteTarget(null);
+      setConfirmText("");
+      await fetchPlayers();
+    } catch (e: any) {
+      toast.error(e?.message || "Error al eliminar");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filtered = players.filter((p) =>
@@ -96,6 +130,14 @@ export default function AdminPlayers() {
                         <SelectItem value="banned">Banned</SelectItem>
                       </SelectContent>
                     </Select>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-8 ml-2"
+                      onClick={() => { setDeleteTarget(p); setConfirmText(""); }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -103,6 +145,28 @@ export default function AdminPlayers() {
           </Table>
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setConfirmText(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar cuenta de {deleteTarget?.nickname}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción borra el perfil, los roles y la cuenta de autenticación. No se puede deshacer.
+              Escribe <strong>DELETE</strong> para confirmar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="DELETE" />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={confirmText !== "DELETE" || deleting}
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+            >
+              {deleting ? "Eliminando..." : "Eliminar definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
