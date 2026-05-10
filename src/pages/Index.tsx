@@ -151,12 +151,12 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black font-display gradient-text leading-[1.1] mb-4">
-            Las privadas más grandes<br />de Warzone LATAM.
+            Privadas para mancos<br />sin lobbies imposibles.
           </h1>
 
           <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-8">
-            Compite en <span className="text-foreground font-semibold">Battle Royale, Resurgimiento y Kill Race</span> junto a los mejores squads de la región.
-            Privadas, scrims y rankings con jugadores verificados manualmente.
+            Juega <span className="text-foreground font-semibold">Battle Royale, Resurgimiento y Kill Race</span> con gente tranqui, mayores y jugadores de KD bajo.
+            Verificamos cada cuenta manualmente para filtrar sweats.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4">
@@ -172,7 +172,7 @@ export default function HomePage() {
             ) : (
               <>
                 <Link to="/auth" className="glow-button px-8 py-3.5 rounded-xl text-primary-foreground font-semibold inline-flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5" /> Crear squad y competir
+                  <ShieldCheck className="h-5 w-5" /> Crear cuenta tranqui
                 </Link>
                 <Link to="/scrims" className="glass-card px-8 py-3.5 rounded-xl text-foreground font-semibold inline-flex items-center gap-2 hover:border-primary/30 transition-colors">
                   <Radio className="h-5 w-5 text-tactical-orange" /> Ver privadas activas
