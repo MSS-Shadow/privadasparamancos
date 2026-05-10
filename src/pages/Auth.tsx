@@ -364,7 +364,7 @@ export default function Auth() {
               <p className="flex items-start gap-2">
                 <ShieldCheck className="h-4 w-4 text-accent shrink-0 mt-0.5" />
                 <span>
-                  Tu cuenta entrará en estado <span className="text-foreground font-semibold">pendiente de verificación</span> hasta que un admin valide tu Player ID. Podrás competir igual mientras tanto.
+                  Tu cuenta entrará en estado <span className="text-foreground font-semibold">pendiente de verificación</span> hasta que un admin valide tu Player ID. Podrás jugar privadas mientras tanto.
                 </span>
               </p>
             </div>

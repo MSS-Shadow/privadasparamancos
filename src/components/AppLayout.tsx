@@ -71,8 +71,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Crosshair className="h-6 w-6 text-background" />
           </div>
           <div>
-            <span className="font-bold text-xl font-display tracking-tight text-foreground">Warzone Hub</span>
-            <p className="text-[10px] text-muted-foreground font-medium tracking-widest uppercase -mt-0.5">Private · LATAM</p>
+            <span className="font-bold text-xl font-display tracking-tight text-foreground">Privadas para Mancos</span>
+            <p className="text-[10px] text-muted-foreground font-medium tracking-widest uppercase -mt-0.5">Tranqui · LATAM</p>
           </div>
         </div>
 
@@ -146,7 +146,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-tactical-orange">
               <Crosshair className="h-5 w-5 text-background" />
             </div>
-            <span className="font-bold text-lg font-display tracking-tight text-foreground">Warzone Hub</span>
+            <span className="font-bold text-lg font-display tracking-tight text-foreground">Privadas para Mancos</span>
           </Link>
 
           <div className="flex items-center gap-3">

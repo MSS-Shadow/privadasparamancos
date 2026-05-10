@@ -76,7 +76,7 @@ export default function TeamsPage() {
               <Users className="h-4 w-4" /> Comunidad
             </div>
             <h1 className="text-4xl md:text-6xl font-black font-display gradient-text leading-[1.1] mb-2">Equipos / Clanes</h1>
-            <p className="text-muted-foreground text-lg">Únete a un clan o crea el tuyo para competir.</p>
+            <p className="text-muted-foreground text-lg">Únete a un squad o crea el tuyo para jugar privadas tranquilas.</p>
           </div>
           {user && (
             <Link to="/clan-leader-request" className="glow-button px-6 py-3 rounded-xl text-primary-foreground font-semibold inline-flex items-center gap-2 self-start">

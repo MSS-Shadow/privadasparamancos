@@ -16,8 +16,29 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 18000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("La operación tardó demasiado. Se canceló el cargando para evitar que la página se cuelgue.")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
+
+const getDeleteErrorMessage = async (error: any) => {
+  const fallback = error?.message || "Error al eliminar";
+  try {
+    const payload = await error?.context?.json?.();
+    return payload?.error || fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 export default function AdminPlayers() {
   const [players, setPlayers] = useState<any[]>([]);
@@ -30,7 +51,9 @@ export default function AdminPlayers() {
   const fetchPlayers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      const { data, error } = await withTimeout(
+        supabase.from("profiles").select("*").order("created_at", { ascending: false })
+      );
       if (error) throw error;
       setPlayers(data || []);
     } catch (err: any) {
@@ -44,20 +67,26 @@ export default function AdminPlayers() {
   useEffect(() => { fetchPlayers(); }, []);
 
   const updateStatus = async (userId: string, status: string) => {
-    const { error } = await supabase.from("profiles").update({ status }).eq("user_id", userId);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`Estado actualizado a ${status}`);
-    fetchPlayers();
+    try {
+      const { error } = await withTimeout(supabase.from("profiles").update({ status }).eq("user_id", userId));
+      if (error) throw error;
+      toast.success(`Estado actualizado a ${status}`);
+      await fetchPlayers();
+    } catch (e: any) {
+      toast.error(e?.message || "Error al actualizar estado");
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
-        body: { target_user_id: deleteTarget.user_id },
-      });
-      if (error) throw error;
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("admin-delete-user", {
+          body: { target_user_id: deleteTarget.user_id },
+        })
+      );
+      if (error) throw new Error(await getDeleteErrorMessage(error));
       if ((data as any)?.error) throw new Error((data as any).error);
       toast.success("Cuenta eliminada");
       setDeleteTarget(null);
