@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
 
-const ALL_ROLES = ["admin", "clan_leader", "content_creator", "player"] as const;
+const ALL_ROLES = ["admin", "clan_leader", "content_creator"] as const;
 
 export default function AdminRoleManager() {
   const [users, setUsers] = useState<any[]>([]);
@@ -24,11 +24,9 @@ export default function AdminRoleManager() {
 
       if (error) throw error;
 
-      const { data: allRoles, error: rolesError } = await supabase
+      const { data: allRoles } = await supabase
         .from("user_roles")
         .select("user_id, role");
-
-      if (rolesError) throw rolesError;
 
       const roleMap: Record<string, string[]> = {};
       (allRoles || []).forEach((r: any) => {
@@ -59,31 +57,37 @@ export default function AdminRoleManager() {
           .from("user_roles")
           .delete()
           .eq("user_id", userId)
-          .eq("role", role as any);
+          .eq("role", role);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("user_roles")
-          .insert({ user_id: userId, role: role as any });
+          .insert({ user_id: userId, role });
         if (error && !String(error.message).includes("duplicate")) throw error;
       }
 
       if (role === "clan_leader") {
-        await supabase.from("profiles").update({ is_clan_leader: !hasRole }).eq("user_id", userId);
+        await supabase
+          .from("profiles")
+          .update({ is_clan_leader: !hasRole })
+          .eq("user_id", userId);
       }
 
       toast.success(`Rol "${role}" ${hasRole ? "removido" : "asignado"}`);
       await fetchUsers();
     } catch (err: any) {
       console.error("Error toggling role:", err);
-      toast.error(`Error al ${hasRole ? "remover" : "asignar"} rol: ${err.message || "desconocido"}`);
+      toast.error(`Error al actualizar rol: ${err.message || "Inténtalo de nuevo"}`);
     }
   };
 
-  const filtered = users.filter((u) =>
-    u.nickname?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Búsqueda segura (evita toLowerCase en null)
+  const filtered = users.filter((u) => {
+    const nickname = u.nickname ? u.nickname.toLowerCase() : "";
+    const email = u.email ? u.email.toLowerCase() : "";
+    const searchTerm = search.toLowerCase();
+    return nickname.includes(searchTerm) || email.includes(searchTerm);
+  });
 
   if (loading) return <div className="p-12 text-center text-muted-foreground">Cargando usuarios...</div>;
 
@@ -98,7 +102,12 @@ export default function AdminRoleManager() {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Buscar por nickname o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        <Input 
+          placeholder="Buscar por nickname o email..." 
+          value={search} 
+          onChange={(e) => setSearch(e.target.value)} 
+          className="pl-10" 
+        />
       </div>
 
       <div className="border border-border rounded-lg overflow-hidden">
@@ -144,7 +153,7 @@ export default function AdminRoleManager() {
                             size="sm"
                             variant={has ? "destructive" : "outline"}
                             className="h-7 text-xs"
-                            onClick={() => toggleRole(user.user_id, role, has)}
+                            onClick={() => toggleRole(user.user_id || user.id, role, has)}
                           >
                             {has ? `- ${role}` : `+ ${role}`}
                           </Button>
