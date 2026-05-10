@@ -100,6 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let initialized = false;
+    const safetyTimer = window.setTimeout(() => {
+      if (!initialized) {
+        initialized = true;
+        setLoading(false);
+      }
+    }, 15000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
@@ -117,22 +123,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!initialized) {
-        initialized = true;
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user?.id) {
-          await Promise.allSettled([
-            fetchProfile(session.user.id),
-            fetchRoles(session.user.id)
-          ]);
+    withTimeout(supabase.auth.getSession(), 12000)
+      .then(async ({ data: { session } }) => {
+        if (!initialized) {
+          initialized = true;
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user?.id) {
+            await Promise.allSettled([
+              fetchProfile(session.user.id),
+              fetchRoles(session.user.id)
+            ]);
+          }
         }
-        setLoading(false);
-      }
-    });
+      })
+      .catch((err) => {
+        console.warn("getSession failed:", err);
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setRoles([]);
+      })
+      .finally(() => setLoading(false));
 
-    return () => subscription.unsubscribe();
+    return () => {
+      window.clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
