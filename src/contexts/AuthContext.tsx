@@ -1,23 +1,14 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import type { Tables } from "@/integrations/supabase/types";
 
-const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error("Tiempo de espera agotado")), ms);
-  });
-  try {
-    return await Promise.race([promise, timeout]);
-  } finally {
-    clearTimeout(timeoutId!);
-  }
-};
+type Profile = Tables<"profiles">;
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: any | null;
+  profile: Profile | null;
   roles: string[];
   loading: boolean;
   isAdmin: boolean;
@@ -27,15 +18,8 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  profile: null,
-  roles: [],
-  loading: true,
-  isAdmin: false,
-  isClanLeader: false,
-  signOut: async () => {},
-  refreshProfile: async () => {},
+  user: null, session: null, profile: null, roles: [], loading: true,
+  isAdmin: false, isClanLeader: false, signOut: async () => {}, refreshProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -43,78 +27,48 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRoles = async (userId: string) => {
-    try {
-      const { data } = await withTimeout(
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId)
-      );
-
-      if (!data || data.length === 0) {
-        setRoles([]);
-        return [];
-      }
-
-      const safeRoles = data
-        .map((item: any) => {
-          const role = item?.role;
-          return typeof role === "string" ? role.toLowerCase().trim() : null;
-        })
-        .filter((role): role is string => role !== null);
-
-      setRoles(safeRoles);
-      return safeRoles;
-    } catch (err) {
-      console.warn("fetchRoles failed:", err);
-      setRoles([]);
-      return [];
-    }
-  };
-
   const fetchProfile = async (userId: string) => {
     try {
-      const { data } = await withTimeout(
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .maybeSingle()
-      );
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (error) console.warn("Error fetching profile:", error.message);
       setProfile(data || null);
-    } catch {
+    } catch (err) {
+      console.warn("fetchProfile failed:", err);
       setProfile(null);
     }
   };
 
+  const fetchRoles = async () => {
+    // Temporal: Solo admin manual por email
+    const adminEmails = ["portadormato@gmail.com"]; // ← CAMBIA ESTO por tu correo real
+    const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
+    
+    setRoles(isAdmin ? ["admin"] : []);
+  };
+
   const refreshProfile = async () => {
-    if (user?.id) {
-      await Promise.allSettled([fetchProfile(user.id), fetchRoles(user.id)]);
+    if (user) {
+      await fetchProfile(user.id);
+      await fetchRoles();
     }
   };
 
   useEffect(() => {
-    let initialized = false;
-    const safetyTimer = window.setTimeout(() => {
-      if (!initialized) {
-        setLoading(false);
-      }
-    }, 15000);
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
 
-      if (session?.user?.id) {
-        await Promise.allSettled([
-          fetchProfile(session.user.id),
-          fetchRoles(session.user.id)
-        ]);
+      if (session?.user) {
+        await Promise.all([fetchProfile(session.user.id), fetchRoles()]);
       } else {
         setProfile(null);
         setRoles([]);
@@ -122,34 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    withTimeout(supabase.auth.getSession(), 12000)
-      .then(async ({ data: { session } }) => {
-        if (!initialized) {
-          initialized = true;
-          setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user?.id) {
-            await Promise.allSettled([
-              fetchProfile(session.user.id),
-              fetchRoles(session.user.id)
-            ]);
-          }
-        }
-      })
-      .catch((err) => {
-        console.warn("getSession failed:", err);
-        setSession(null);
-        setUser(null);
-        setProfile(null);
-        setRoles([]);
-      })
-      .finally(() => setLoading(false));
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await Promise.all([fetchProfile(session.user.id), fetchRoles()]);
+      }
+      setLoading(false);
+    });
 
-    return () => {
-      window.clearTimeout(safetyTimer);
-      subscription.unsubscribe();
-    };
-  }, []);
+    return () => subscription.unsubscribe();
+  }, [user?.email]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -159,19 +96,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRoles([]);
   };
 
-  const isAdmin = roles.includes("admin");
-
   return (
     <AuthContext.Provider value={{
-      user,
-      session,
-      profile,
-      roles,
-      loading,
-      isAdmin,
+      user, session, profile, roles, loading,
+      isAdmin: roles.includes("admin"),
       isClanLeader: roles.includes("clan_leader"),
-      signOut,
-      refreshProfile
+      signOut, refreshProfile
     }}>
       {children}
     </AuthContext.Provider>
