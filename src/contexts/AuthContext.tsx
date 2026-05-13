@@ -5,6 +5,18 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
 
+const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("Tiempo de espera agotado")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -33,11 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await withTimeout(supabase
         .from("profiles")
         .select("*")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle());
 
       if (error) console.warn("Error fetching profile:", error.message);
       setProfile(data || null);
@@ -47,28 +59,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const fetchRoles = async () => {
-    // Temporal: Solo admin manual por email
-    const adminEmails = ["portadormato@gmail.com"]; // ← CAMBIA ESTO por tu correo real
-    const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
-    
-    setRoles(isAdmin ? ["admin"] : []);
+  const fetchRoles = async (userId: string, email?: string | null) => {
+    const adminEmails = ["portadormato@gmail.com"];
+    const emailAdminRole = email && adminEmails.includes(email.toLowerCase()) ? ["admin"] : [];
+
+    try {
+      const { data, error } = await withTimeout(
+        supabase.from("user_roles").select("role").eq("user_id", userId)
+      );
+      if (error) throw error;
+      setRoles(Array.from(new Set([...(data ?? []).map((r: any) => r.role), ...emailAdminRole])));
+    } catch (err) {
+      console.warn("fetchRoles failed:", err);
+      setRoles(emailAdminRole);
+    }
   };
 
   const refreshProfile = async () => {
     if (user) {
       await fetchProfile(user.id);
-      await fetchRoles();
+      await fetchRoles(user.id, user.email);
     }
   };
 
   useEffect(() => {
+    let active = true;
+    const failsafe = setTimeout(() => {
+      if (active) setLoading(false);
+    }, 15000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        await Promise.all([fetchProfile(session.user.id), fetchRoles()]);
+        await Promise.all([fetchProfile(session.user.id), fetchRoles(session.user.id, session.user.email)]);
       } else {
         setProfile(null);
         setRoles([]);
@@ -80,13 +105,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await Promise.all([fetchProfile(session.user.id), fetchRoles()]);
+        await Promise.all([fetchProfile(session.user.id), fetchRoles(session.user.id, session.user.email)]);
       }
+      setLoading(false);
+    }).catch((err) => {
+      console.warn("getSession failed:", err);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
-  }, [user?.email]);
+    return () => {
+      active = false;
+      clearTimeout(failsafe);
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
