@@ -6,14 +6,27 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { RefreshCw, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
+const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("La operación tardó demasiado. Se canceló para evitar cargando infinito.")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
+
 export default function AdminCreators() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.from("creator_requests").select("*").order("created_at", { ascending: false });
+      const { data, error } = await withTimeout(supabase.from("creator_requests").select("*").order("created_at", { ascending: false }));
       if (error) throw error;
       setRequests(data || []);
     } catch (err: any) {
@@ -27,16 +40,27 @@ export default function AdminCreators() {
   useEffect(() => { fetchRequests(); }, []);
 
   const handleAction = async (id: string, status: string, userId: string) => {
-    const { error } = await supabase.from("creator_requests").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    setProcessingId(id);
+    try {
+      const { error } = await withTimeout(supabase.from("creator_requests").update({ status, reviewed_at: new Date().toISOString() }).eq("id", id));
+      if (error) throw error;
 
-    if (status === "Approved") {
-      // Add content_creator role
-      await supabase.from("user_roles").insert({ user_id: userId, role: "content_creator" as any });
+      if (status === "Approved") {
+        const result = await withTimeout((supabase.rpc as any)("admin_toggle_role", {
+          _target_user_id: userId,
+          _role: "content_creator",
+          _add: true,
+        }));
+        if ((result as any)?.error) throw (result as any).error;
+      }
+
+      toast.success(`Solicitud ${status === "Approved" ? "aprobada" : "rechazada"}`);
+      await fetchRequests();
+    } catch (err: any) {
+      toast.error(err?.message || "Error al procesar solicitud");
+    } finally {
+      setProcessingId(null);
     }
-
-    toast.success(`Solicitud ${status === "Approved" ? "aprobada" : "rechazada"}`);
-    fetchRequests();
   };
 
   return (
@@ -86,8 +110,8 @@ export default function AdminCreators() {
                   <TableCell>
                     {r.status === "Pending" && (
                       <div className="flex gap-1">
-                        <Button size="sm" className="h-7 text-xs" onClick={() => handleAction(r.id, "Approved", r.user_id)}>Aprobar</Button>
-                        <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleAction(r.id, "Rejected", r.user_id)}>Rechazar</Button>
+                        <Button size="sm" className="h-7 text-xs" disabled={processingId === r.id} onClick={() => handleAction(r.id, "Approved", r.user_id)}>Aprobar</Button>
+                        <Button size="sm" variant="destructive" className="h-7 text-xs" disabled={processingId === r.id} onClick={() => handleAction(r.id, "Rejected", r.user_id)}>Rechazar</Button>
                       </div>
                     )}
                   </TableCell>

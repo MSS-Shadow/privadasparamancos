@@ -8,25 +8,39 @@ import { Input } from "@/components/ui/input";
 import { Search, RefreshCw } from "lucide-react";
 
 const ALL_ROLES = ["admin", "clan_leader", "content_creator"] as const;
+type ManagedRole = typeof ALL_ROLES[number];
+
+const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("La operación tardó demasiado. Se canceló para evitar cargando infinito.")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
 
 export default function AdminRoleManager() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [updatingKey, setUpdatingKey] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data: profiles, error } = await supabase
+      const { data: profiles, error } = await withTimeout(supabase
         .from("profiles")
         .select("id, user_id, email, nickname, is_clan_leader")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false }));
 
       if (error) throw error;
 
-      const { data: allRoles } = await supabase
+      const { data: allRoles } = await withTimeout(supabase
         .from("user_roles")
-        .select("user_id, role");
+        .select("user_id, role"));
 
       const roleMap: Record<string, string[]> = {};
       (allRoles || []).forEach((r: any) => {
@@ -50,27 +64,23 @@ export default function AdminRoleManager() {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  const toggleRole = async (userId: string, role: string, hasRole: boolean) => {
+  const toggleRole = async (userId: string, role: ManagedRole, hasRole: boolean) => {
+    const key = `${userId}:${role}`;
+    setUpdatingKey(key);
     try {
-      if (hasRole) {
-        const { error } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", userId)
-          .eq("role", role);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role });
-        if (error && !String(error.message).includes("duplicate")) throw error;
-      }
+      const result = await withTimeout((supabase.rpc as any)("admin_toggle_role", {
+        _target_user_id: userId,
+        _role: role,
+        _add: !hasRole,
+      }));
+      const error = (result as any)?.error;
+      if (error) throw error;
 
       if (role === "clan_leader") {
-        await supabase
+        await withTimeout(supabase
           .from("profiles")
           .update({ is_clan_leader: !hasRole })
-          .eq("user_id", userId);
+          .eq("user_id", userId));
       }
 
       toast.success(`Rol "${role}" ${hasRole ? "removido" : "asignado"}`);
@@ -78,6 +88,8 @@ export default function AdminRoleManager() {
     } catch (err: any) {
       console.error("Error toggling role:", err);
       toast.error(`Error al actualizar rol: ${err.message || "Inténtalo de nuevo"}`);
+    } finally {
+      setUpdatingKey(null);
     }
   };
 
@@ -95,8 +107,8 @@ export default function AdminRoleManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Gestión de Roles ({users.length})</h2>
-        <Button variant="ghost" size="sm" onClick={fetchUsers}>
-          <RefreshCw className="h-4 w-4" />
+        <Button variant="ghost" size="sm" onClick={fetchUsers} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
         </Button>
       </div>
 
@@ -153,9 +165,10 @@ export default function AdminRoleManager() {
                             size="sm"
                             variant={has ? "destructive" : "outline"}
                             className="h-7 text-xs"
+                            disabled={updatingKey === `${user.user_id || user.id}:${role}`}
                             onClick={() => toggleRole(user.user_id || user.id, role, has)}
                           >
-                            {has ? `- ${role}` : `+ ${role}`}
+                            {updatingKey === `${user.user_id || user.id}:${role}` ? "..." : has ? `- ${role}` : `+ ${role}`}
                           </Button>
                         );
                       })}

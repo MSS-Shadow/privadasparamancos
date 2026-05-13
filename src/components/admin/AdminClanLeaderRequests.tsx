@@ -7,6 +7,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("La operación tardó demasiado. Se canceló para evitar cargando infinito.")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
+
 interface Request {
   id: string;
   user_id: string;
@@ -27,19 +39,21 @@ export default function AdminClanLeaderRequests() {
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   const fetchRequests = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("clan_leader_requests")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      setLoading(true);
+      const { data, error } = await withTimeout(supabase
+        .from("clan_leader_requests")
+        .select("*")
+        .order("created_at", { ascending: false }));
 
-    if (error) {
+      if (error) throw error;
+      setRequests((data as any[]) ?? []);
+    } catch (error) {
       toast.error("Error al cargar solicitudes");
       console.error(error);
-    } else {
-      setRequests((data as any[]) ?? []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -52,44 +66,45 @@ export default function AdminClanLeaderRequests() {
 
     try {
       // Actualizar estado de la solicitud
-      const { error: updateError } = await supabase
+      const { error: updateError } = await withTimeout(supabase
         .from("clan_leader_requests")
         .update({
           status: action,
           reviewed_at: new Date().toISOString(),
         })
-        .eq("id", req.id);
+        .eq("id", req.id));
 
       if (updateError) throw updateError;
 
       if (action === "approved") {
         // Crear el clan si no existe
-        const { data: existingClan } = await supabase
+        const { data: existingClan } = await withTimeout(supabase
           .from("clans")
           .select("id")
           .eq("name", req.clan_name)
-          .single();
+          .maybeSingle());
 
         if (!existingClan) {
-          const { error: clanError } = await supabase.from("clans").insert({
+          const { error: clanError } = await withTimeout(supabase.from("clans").insert({
             name: req.clan_name,
             leader_user_id: req.user_id,
             leader_nickname: req.nickname,
-          });
+          }));
 
           if (clanError) throw clanError;
         }
 
-        // Asignar rol de clan_leader
-        await supabase.from("user_roles").upsert({
-          user_id: req.user_id,
-          role: "clan_leader",
-        });
+        const roleResult = await withTimeout((supabase.rpc as any)("admin_toggle_role", {
+          _target_user_id: req.user_id,
+          _role: "clan_leader",
+          _add: true,
+        }));
+        if ((roleResult as any)?.error) throw (roleResult as any).error;
 
         // Actualizar perfil
-        await (supabase.from as any)("profiles")
+        await withTimeout((supabase.from as any)("profiles")
           .update({ is_clan_leader: true })
-          .eq("user_id", req.user_id);
+          .eq("user_id", req.user_id));
 
         toast.success(`✅ ${req.nickname} es ahora líder del clan "${req.clan_name}"`);
       } else {
@@ -97,20 +112,20 @@ export default function AdminClanLeaderRequests() {
       }
 
       // Log de moderación
-      await supabase.from("moderation_logs").insert({
+      await withTimeout(supabase.from("moderation_logs").insert({
         admin_user_id: user.id,
         admin_nickname: profile?.nickname ?? "Admin",
         target_user_id: req.user_id,
         target_nickname: req.nickname,
         action: action === "approved" ? "Approved clan leader" : "Rejected clan leader",
         reason: `Clan: ${req.clan_name}`,
-      });
+      }));
 
     } catch (error: any) {
       toast.error(error.message || "Error al procesar la solicitud");
     } finally {
       setProcessingId(null);
-      fetchRequests();
+      await fetchRequests();
     }
   };
 
