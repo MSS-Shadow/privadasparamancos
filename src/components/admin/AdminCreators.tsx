@@ -110,8 +110,8 @@ export default function AdminCreators() {
                   <TableCell>
                     {r.status === "Pending" && (
                       <div className="flex gap-1">
-                        <Button size="sm" className="h-7 text-xs" onClick={() => handleAction(r.id, "Approved", r.user_id)}>Aprobar</Button>
-                        <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={() => handleAction(r.id, "Rejected", r.user_id)}>Rechazar</Button>
+                        <Button size="sm" className="h-7 text-xs" disabled={processingId === r.id} onClick={() => handleAction(r.id, "Approved", r.user_id)}>Aprobar</Button>
+                        <Button size="sm" variant="destructive" className="h-7 text-xs" disabled={processingId === r.id} onClick={() => handleAction(r.id, "Rejected", r.user_id)}>Rechazar</Button>
                       </div>
                     )}
                   </TableCell>
