@@ -7,6 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trophy, Eye, EyeOff, ShieldCheck, Gamepad2, Users, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
+const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("La operación tardó demasiado. Inténtalo de nuevo.")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
+
 export default function Auth() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
@@ -94,42 +106,54 @@ export default function Auth() {
 
     try {
       // Sign out any existing session before creating new account
-      await supabase.auth.signOut();
+      await withTimeout(supabase.auth.signOut()).catch(() => undefined);
+      const email = form.email.trim().toLowerCase();
+      const nickname = form.nickname.trim();
+      const playerId = form.playerId.trim();
+      const clan = selectedClan !== "sin_clan" ? selectedClan : "";
       
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email.trim().toLowerCase(),
+      const { data: authData, error: authError } = await withTimeout(supabase.auth.signUp({
+        email,
         password: form.password,
         options: {
           emailRedirectTo: window.location.origin,
+          data: {
+            email,
+            nickname,
+            player_id: playerId,
+            platform: form.platform,
+            country: form.country,
+            clan,
+          },
         },
-      });
+      }));
 
       if (authError) throw authError;
 
       if (authData.user) {
-        const { error: profileError } = await supabase.from("profiles").insert({
+        const { error: profileError } = await withTimeout(supabase.from("profiles").upsert({
           user_id: authData.user.id,
-          email: form.email.trim().toLowerCase(),
-          nickname: form.nickname.trim(),
-          player_id: form.playerId.trim(),
+          email,
+          nickname,
+          player_id: playerId,
           platform: form.platform,
           country: form.country,
-          clan: selectedClan !== "sin_clan" ? selectedClan : "",
-        });
+          clan,
+        }, { onConflict: "user_id" }));
 
         if (profileError) {
           console.error("Profile insert error:", profileError);
-          toast.error("Error al crear perfil: " + profileError.message);
+          toast.success("Cuenta creada. Revisa tu email para confirmar y completar el perfil.");
           return;
         }
 
         if (selectedClan !== "sin_clan") {
-          await (supabase.from as any)("clan_join_requests").insert({
+          await withTimeout((supabase.from as any)("clan_join_requests").insert({
             user_id: authData.user.id,
-            nickname: form.nickname.trim(),
-            player_id: form.playerId.trim(),
+            nickname,
+            player_id: playerId,
             clan_name: selectedClan,
-          });
+          })).catch(() => undefined);
           toast.success(`Solicitud enviada al clan "${selectedClan}"`);
         } else {
           toast.success("¡Cuenta creada! Revisa tu email.");
@@ -151,10 +175,10 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await withTimeout(supabase.auth.signInWithPassword({
         email: form.email.trim().toLowerCase(),
         password: form.password,
-      });
+      }));
 
       if (error) throw error;
 

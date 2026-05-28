@@ -2,6 +2,19 @@ import { useState, useEffect } from "react";
 import { User, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("La carga tardó demasiado")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
 
 interface Player {
   nickname: string;
@@ -19,19 +32,31 @@ export default function PlayersPage() {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data: profiles } = await supabase.from("profiles").select("nickname, player_id, platform, clan, verified").eq("status", "active");
-      const { data: regs } = await supabase.from("tournament_registrations").select("nickname");
+      try {
+        const [{ data: profiles, error: profilesError }, { data: regs, error: regsError }] = await Promise.all([
+          withTimeout(supabase.from("profiles").select("nickname, player_id, platform, clan, verified").eq("status", "active")),
+          withTimeout(supabase.from("tournament_registrations").select("nickname")),
+        ]);
 
-      const regCount = new Map<string, number>();
-      regs?.forEach((r: any) => { regCount.set(r.nickname, (regCount.get(r.nickname) || 0) + 1); });
+        if (profilesError) throw profilesError;
+        if (regsError) throw regsError;
 
-      const list: Player[] = (profiles ?? []).map((p: any) => ({
-        ...p,
-        tournaments: regCount.get(p.nickname) || 0,
-      }));
+        const regCount = new Map<string, number>();
+        regs?.forEach((r: any) => { regCount.set(r.nickname, (regCount.get(r.nickname) || 0) + 1); });
 
-      setPlayers(list.sort((a, b) => b.tournaments - a.tournaments));
-      setLoading(false);
+        const list: Player[] = (profiles ?? []).map((p: any) => ({
+          ...p,
+          tournaments: regCount.get(p.nickname) || 0,
+        }));
+
+        setPlayers(list.sort((a, b) => b.tournaments - a.tournaments));
+      } catch (error: any) {
+        console.error("Error cargando jugadores:", error);
+        toast.error(error?.message || "Error al cargar jugadores");
+        setPlayers([]);
+      } finally {
+        setLoading(false);
+      }
     };
     fetch();
   }, []);

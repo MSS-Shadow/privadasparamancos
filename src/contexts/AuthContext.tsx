@@ -43,6 +43,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const ensureProfile = async (authUser: User) => {
+    const metadata = authUser.user_metadata || {};
+    const fallbackNickname = authUser.email?.split("@")[0] || "Jugador";
+    const platform = metadata.platform === "PC" || metadata.platform === "Mobile" ? metadata.platform : "Mobile";
+
+    await withTimeout(supabase.from("profiles").upsert({
+      user_id: authUser.id,
+      email: authUser.email || metadata.email || "sin-email@privadas.local",
+      nickname: (metadata.nickname || fallbackNickname).toString().trim(),
+      player_id: (metadata.player_id || `PENDIENTE-${authUser.id.slice(0, 8)}`).toString().trim(),
+      platform,
+      country: (metadata.country || "LATAM").toString().trim(),
+      clan: (metadata.clan || "").toString().trim(),
+    }, { onConflict: "user_id" }));
+  };
+
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await withTimeout(supabase
@@ -77,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = async () => {
     if (user) {
+      await ensureProfile(user);
       await fetchProfile(user.id);
       await fetchRoles(user.id, user.email);
     }
@@ -88,26 +105,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (active) setLoading(false);
     }, 15000);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    const syncSession = async (nextSession: Session | null) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
 
-      if (session?.user) {
-        await Promise.all([fetchProfile(session.user.id), fetchRoles(session.user.id, session.user.email)]);
+      if (nextSession?.user) {
+        await ensureProfile(nextSession.user).catch((err) => console.warn("ensureProfile failed:", err));
+        await Promise.all([fetchProfile(nextSession.user.id), fetchRoles(nextSession.user.id, nextSession.user.email)]);
       } else {
         setProfile(null);
         setRoles([]);
       }
-      setLoading(false);
+
+      if (active) setLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      void syncSession(session);
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await Promise.all([fetchProfile(session.user.id), fetchRoles(session.user.id, session.user.email)]);
-      }
-      setLoading(false);
+      await syncSession(session);
     }).catch((err) => {
       console.warn("getSession failed:", err);
       setLoading(false);
@@ -121,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await withTimeout(supabase.auth.signOut()).catch((err) => console.warn("signOut failed:", err));
     setUser(null);
     setSession(null);
     setProfile(null);
