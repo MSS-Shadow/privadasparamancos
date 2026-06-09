@@ -47,6 +47,7 @@ export default function AdminPlayers() {
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
   const fetchPlayers = async () => {
     try {
@@ -67,6 +68,7 @@ export default function AdminPlayers() {
   useEffect(() => { fetchPlayers(); }, []);
 
   const updateStatus = async (userId: string, status: string) => {
+    setUpdatingUserId(userId);
     try {
       const { error } = await withTimeout(supabase.from("profiles").update({ status }).eq("user_id", userId));
       if (error) throw error;
@@ -74,6 +76,8 @@ export default function AdminPlayers() {
       await fetchPlayers();
     } catch (e: any) {
       toast.error(e?.message || "Error al actualizar estado");
+    } finally {
+      setUpdatingUserId(null);
     }
   };
 
@@ -94,6 +98,7 @@ export default function AdminPlayers() {
       await fetchPlayers();
     } catch (e: any) {
       toast.error(e?.message || "Error al eliminar");
+      await fetchPlayers();
     } finally {
       setDeleting(false);
     }
@@ -149,7 +154,7 @@ export default function AdminPlayers() {
                   </TableCell>
                   <TableCell>{p.verified ? "✅" : "❌"}</TableCell>
                   <TableCell>
-                    <Select value={p.status} onValueChange={(v) => updateStatus(p.user_id, v)}>
+                    <Select value={p.status} onValueChange={(v) => updateStatus(p.user_id, v)} disabled={updatingUserId === p.user_id || deleting}>
                       <SelectTrigger className="w-28 h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
@@ -163,6 +168,7 @@ export default function AdminPlayers() {
                       size="sm"
                       variant="destructive"
                       className="h-8 ml-2"
+                      disabled={deleting || updatingUserId === p.user_id}
                       onClick={() => { setDeleteTarget(p); setConfirmText(""); }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
