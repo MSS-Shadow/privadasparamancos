@@ -68,20 +68,15 @@ export default function AdminRoleManager() {
     const key = `${userId}:${role}`;
     setUpdatingKey(key);
     try {
-      const result = await withTimeout((supabase.rpc as any)("admin_toggle_role", {
-        _target_user_id: userId,
-        _role: role,
-        _add: !hasRole,
+      const { data, error } = await withTimeout(supabase.functions.invoke("admin-toggle-role", {
+        body: {
+          target_user_id: userId,
+          role,
+          add: !hasRole,
+        },
       }));
-      const error = (result as any)?.error;
       if (error) throw error;
-
-      if (role === "clan_leader") {
-        await withTimeout(supabase
-          .from("profiles")
-          .update({ is_clan_leader: !hasRole })
-          .eq("user_id", userId));
-      }
+      if ((data as any)?.error) throw new Error((data as any).error);
 
       toast.success(`Rol "${role}" ${hasRole ? "removido" : "asignado"}`);
       await fetchUsers();
