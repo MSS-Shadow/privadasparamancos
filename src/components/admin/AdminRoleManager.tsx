@@ -9,6 +9,11 @@ import { Search, RefreshCw } from "lucide-react";
 
 const ALL_ROLES = ["admin", "clan_leader", "content_creator"] as const;
 type ManagedRole = typeof ALL_ROLES[number];
+type UserRow = { id: string; user_id: string; email: string | null; nickname: string | null; is_clan_leader: boolean | null; roles: string[] };
+type RoleRow = { user_id: string; role: string | null };
+type FunctionErrorPayload = { error?: string };
+
+const getMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
 
 const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout>;
@@ -23,7 +28,7 @@ const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> 
 };
 
 export default function AdminRoleManager() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updatingKey, setUpdatingKey] = useState<string | null>(null);
@@ -43,18 +48,18 @@ export default function AdminRoleManager() {
         .select("user_id, role"));
 
       const roleMap: Record<string, string[]> = {};
-      (allRoles || []).forEach((r: any) => {
+      ((allRoles || []) as RoleRow[]).forEach((r) => {
         if (!roleMap[r.user_id]) roleMap[r.user_id] = [];
         if (r.role) roleMap[r.user_id].push(r.role);
       });
 
-      const processed = (profiles || []).map((u: any) => ({
+      const processed = (profiles || []).map((u) => ({
         ...u,
         roles: roleMap[u.user_id] || [],
       }));
 
       setUsers(processed);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching users:", err);
       toast.error("Error al cargar usuarios");
     } finally {
@@ -76,13 +81,14 @@ export default function AdminRoleManager() {
         },
       }));
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      const payload = data as FunctionErrorPayload | null;
+      if (payload?.error) throw new Error(payload.error);
 
       toast.success(`Rol "${role}" ${hasRole ? "removido" : "asignado"}`);
       await fetchUsers();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error toggling role:", err);
-      toast.error(`Error al actualizar rol: ${err.message || "Inténtalo de nuevo"}`);
+      toast.error(`Error al actualizar rol: ${getMessage(err, "Inténtalo de nuevo")}`);
     } finally {
       setUpdatingKey(null);
     }
