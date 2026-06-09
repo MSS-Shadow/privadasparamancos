@@ -18,6 +18,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type PlayerRow = {
+  id: string;
+  user_id: string;
+  nickname: string | null;
+  player_id: string | null;
+  email: string | null;
+  platform: string | null;
+  clan: string | null;
+  status: string;
+  verified: boolean | null;
+};
+
+type FunctionErrorPayload = { error?: string };
+
+const getMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
+
 const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 18000): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
@@ -30,8 +46,8 @@ const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 18000): Promise<T> 
   }
 };
 
-const getDeleteErrorMessage = async (error: any) => {
-  const fallback = error?.message || "Error al eliminar";
+const getDeleteErrorMessage = async (error: { message?: string; context?: { json?: () => Promise<FunctionErrorPayload> } }) => {
+  const fallback = error.message || "Error al eliminar";
   try {
     const payload = await error?.context?.json?.();
     return payload?.error || fallback;
@@ -41,10 +57,10 @@ const getDeleteErrorMessage = async (error: any) => {
 };
 
 export default function AdminPlayers() {
-  const [players, setPlayers] = useState<any[]>([]);
+  const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PlayerRow | null>(null);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
@@ -57,7 +73,7 @@ export default function AdminPlayers() {
       );
       if (error) throw error;
       setPlayers(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error loading players:", err);
       toast.error("Error al cargar jugadores");
     } finally {
@@ -74,8 +90,8 @@ export default function AdminPlayers() {
       if (error) throw error;
       toast.success(`Estado actualizado a ${status}`);
       await fetchPlayers();
-    } catch (e: any) {
-      toast.error(e?.message || "Error al actualizar estado");
+    } catch (e: unknown) {
+      toast.error(getMessage(e, "Error al actualizar estado"));
     } finally {
       setUpdatingUserId(null);
     }
@@ -91,13 +107,14 @@ export default function AdminPlayers() {
         })
       );
       if (error) throw new Error(await getDeleteErrorMessage(error));
-      if ((data as any)?.error) throw new Error((data as any).error);
+      const payload = data as FunctionErrorPayload | null;
+      if (payload?.error) throw new Error(payload.error);
       toast.success("Cuenta eliminada");
       setDeleteTarget(null);
       setConfirmText("");
       await fetchPlayers();
-    } catch (e: any) {
-      toast.error(e?.message || "Error al eliminar");
+    } catch (e: unknown) {
+      toast.error(getMessage(e, "Error al eliminar"));
       await fetchPlayers();
     } finally {
       setDeleting(false);

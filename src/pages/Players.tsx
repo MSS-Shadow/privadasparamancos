@@ -25,6 +25,11 @@ interface Player {
   tournaments: number;
 }
 
+type ProfilePlayerRow = Omit<Player, "tournaments">;
+type RegistrationRow = { nickname: string | null };
+
+const getMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
+
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,17 +47,19 @@ export default function PlayersPage() {
       if (regsError) throw regsError;
 
       const regCount = new Map<string, number>();
-      regs?.forEach((r: any) => { regCount.set(r.nickname, (regCount.get(r.nickname) || 0) + 1); });
+      (regs as RegistrationRow[] | null)?.forEach((r) => {
+        if (r.nickname) regCount.set(r.nickname, (regCount.get(r.nickname) || 0) + 1);
+      });
 
-      const list: Player[] = (profiles ?? []).map((p: any) => ({
+      const list: Player[] = ((profiles ?? []) as ProfilePlayerRow[]).map((p) => ({
         ...p,
         tournaments: regCount.get(p.nickname) || 0,
       }));
 
       setPlayers(list.sort((a, b) => b.tournaments - a.tournaments));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error cargando jugadores:", error);
-      toast.error(error?.message || "Error al cargar jugadores");
+      toast.error(getMessage(error, "Error al cargar jugadores"));
       setPlayers([]);
     } finally {
       setLoading(false);
