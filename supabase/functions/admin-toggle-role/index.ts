@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const allowedRoles = new Set(["admin", "clan_leader", "content_creator", "player"]);
 const mainAdminEmails = ["portadormato@gmail.com"];
 
 Deno.serve(async (req) => {
@@ -24,17 +25,18 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => null);
     const targetUserId = body?.target_user_id;
-    if (!targetUserId || !uuidRegex.test(targetUserId)) return json({ error: "Jugador inválido" }, 400);
+    const role = body?.role;
+    const add = Boolean(body?.add);
+    if (!targetUserId || !uuidRegex.test(targetUserId)) return json({ error: "Usuario inválido" }, 400);
+    if (!allowedRoles.has(role)) return json({ error: "Rol inválido" }, 400);
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: userData, error: userError } = await userClient.auth.getUser();
-    if (userError) return json({ error: "Sesión inválida" }, 401);
-    const caller = userData?.user;
-    if (!caller) return json({ error: "No autorizado" }, 401);
-    if (targetUserId === caller.id) return json({ error: "No te puedes eliminar a ti mismo" }, 400);
+    if (userError || !userData?.user) return json({ error: "Sesión inválida" }, 401);
+    const caller = userData.user;
 
     const admin = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -47,31 +49,26 @@ Deno.serve(async (req) => {
     const isAdmin = (roles ?? []).some((r: any) => r.role === "admin") || mainAdminEmails.includes((caller.email || "").toLowerCase());
     if (!isAdmin) return json({ error: "No tienes permisos de admin" }, 403);
 
-    const cleanupSteps = [
-      { table: "user_roles", column: "user_id" },
-      { table: "clan_join_requests", column: "user_id" },
-      { table: "clan_leader_requests", column: "user_id" },
-      { table: "clan_members", column: "user_id" },
-      { table: "creator_requests", column: "user_id" },
-      { table: "reports", column: "reporter_user_id" },
-      { table: "scrim_participants", column: "user_id" },
-      { table: "tournament_registrations", column: "user_id" },
-      { table: "tournament_waiting_list", column: "user_id" },
-      { table: "verification_requests", column: "user_id" },
-      { table: "profiles", column: "user_id" },
-    ];
-
-    for (const step of cleanupSteps) {
-      const { error } = await admin.from(step.table).delete().eq(step.column, targetUserId);
-      if (error) return json({ error: `No se pudo limpiar ${step.table}: ${error.message}` }, 500);
+    if (targetUserId === caller.id && role === "admin" && !add) {
+      return json({ error: "No puedes quitarte tu propio rol admin" }, 400);
     }
 
-    const { error: delErr } = await admin.auth.admin.deleteUser(targetUserId);
-    if (delErr && !delErr.message.toLowerCase().includes("not found")) return json({ error: delErr.message }, 500);
+    const result = add
+      ? await admin.from("user_roles").upsert({ user_id: targetUserId, role }, { onConflict: "user_id,role", ignoreDuplicates: true })
+      : await admin.from("user_roles").delete().eq("user_id", targetUserId).eq("role", role);
+
+    if (result.error) {
+      return json({ error: result.error.message }, 500);
+    }
+
+    if (role === "clan_leader") {
+      const { error } = await admin.from("profiles").update({ is_clan_leader: add }).eq("user_id", targetUserId);
+      if (error) return json({ error: error.message }, 500);
+    }
 
     return json({ ok: true });
   } catch (e: any) {
-    console.error("admin-delete-user failed", e);
+    console.error("admin-toggle-role failed", e);
     return json({ error: e?.message || "Server error" }, 500);
   }
 });

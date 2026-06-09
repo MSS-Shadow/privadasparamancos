@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.admin_toggle_role(uuid, app_role, boolean) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_toggle_role(uuid, app_role, boolean) TO service_role;

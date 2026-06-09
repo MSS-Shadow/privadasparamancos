@@ -32,6 +32,9 @@ interface Request {
   created_at: string;
 }
 
+type FunctionErrorPayload = { error?: string };
+const getMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
+
 export default function AdminClanLeaderRequests() {
   const { user, profile } = useAuth();
   const [requests, setRequests] = useState<Request[]>([]);
@@ -47,7 +50,7 @@ export default function AdminClanLeaderRequests() {
         .order("created_at", { ascending: false }));
 
       if (error) throw error;
-      setRequests((data as any[]) ?? []);
+      setRequests((data as Request[] | null) ?? []);
     } catch (error) {
       toast.error("Error al cargar solicitudes");
       console.error(error);
@@ -94,17 +97,16 @@ export default function AdminClanLeaderRequests() {
           if (clanError) throw clanError;
         }
 
-        const roleResult = await withTimeout((supabase.rpc as any)("admin_toggle_role", {
-          _target_user_id: req.user_id,
-          _role: "clan_leader",
-          _add: true,
+        const { data: roleData, error: roleError } = await withTimeout(supabase.functions.invoke("admin-toggle-role", {
+          body: {
+            target_user_id: req.user_id,
+            role: "clan_leader",
+            add: true,
+          },
         }));
-        if ((roleResult as any)?.error) throw (roleResult as any).error;
-
-        // Actualizar perfil
-        await withTimeout((supabase.from as any)("profiles")
-          .update({ is_clan_leader: true })
-          .eq("user_id", req.user_id));
+        if (roleError) throw roleError;
+        const payload = roleData as FunctionErrorPayload | null;
+        if (payload?.error) throw new Error(payload.error);
 
         toast.success(`✅ ${req.nickname} es ahora líder del clan "${req.clan_name}"`);
       } else {
@@ -121,8 +123,8 @@ export default function AdminClanLeaderRequests() {
         reason: `Clan: ${req.clan_name}`,
       }));
 
-    } catch (error: any) {
-      toast.error(error.message || "Error al procesar la solicitud");
+    } catch (error: unknown) {
+      toast.error(getMessage(error, "Error al procesar la solicitud"));
     } finally {
       setProcessingId(null);
       await fetchRequests();

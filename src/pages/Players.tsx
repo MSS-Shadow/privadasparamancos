@@ -25,40 +25,66 @@ interface Player {
   tournaments: number;
 }
 
+type ProfilePlayerRow = Omit<Player, "tournaments">;
+type RegistrationRow = { nickname: string | null };
+
+const getMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
+
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
+  const fetchPlayers = async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true);
+      const [{ data: profiles, error: profilesError }, { data: regs, error: regsError }] = await Promise.all([
+        withTimeout(supabase.from("profiles").select("nickname, player_id, platform, clan, verified").eq("status", "active")),
+        withTimeout(supabase.from("tournament_registrations").select("nickname")),
+      ]);
+
+      if (profilesError) throw profilesError;
+      if (regsError) throw regsError;
+
+      const regCount = new Map<string, number>();
+      (regs as RegistrationRow[] | null)?.forEach((r) => {
+        if (r.nickname) regCount.set(r.nickname, (regCount.get(r.nickname) || 0) + 1);
+      });
+
+      const list: Player[] = ((profiles ?? []) as ProfilePlayerRow[]).map((p) => ({
+        ...p,
+        tournaments: regCount.get(p.nickname) || 0,
+      }));
+
+      setPlayers(list.sort((a, b) => b.tournaments - a.tournaments));
+    } catch (error: unknown) {
+      console.error("Error cargando jugadores:", error);
+      toast.error(getMessage(error, "Error al cargar jugadores"));
+      setPlayers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const [{ data: profiles, error: profilesError }, { data: regs, error: regsError }] = await Promise.all([
-          withTimeout(supabase.from("profiles").select("nickname, player_id, platform, clan, verified").eq("status", "active")),
-          withTimeout(supabase.from("tournament_registrations").select("nickname")),
-        ]);
-
-        if (profilesError) throw profilesError;
-        if (regsError) throw regsError;
-
-        const regCount = new Map<string, number>();
-        regs?.forEach((r: any) => { regCount.set(r.nickname, (regCount.get(r.nickname) || 0) + 1); });
-
-        const list: Player[] = (profiles ?? []).map((p: any) => ({
-          ...p,
-          tournaments: regCount.get(p.nickname) || 0,
-        }));
-
-        setPlayers(list.sort((a, b) => b.tournaments - a.tournaments));
-      } catch (error: any) {
-        console.error("Error cargando jugadores:", error);
-        toast.error(error?.message || "Error al cargar jugadores");
-        setPlayers([]);
-      } finally {
-        setLoading(false);
-      }
+    let syncTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleSync = () => {
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => fetchPlayers(false), 500);
     };
-    fetch();
+
+    fetchPlayers();
+
+    const channel = supabase
+      .channel("players-public-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, scheduleSync)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tournament_registrations" }, scheduleSync)
+      .subscribe();
+
+    return () => {
+      if (syncTimer) clearTimeout(syncTimer);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filtered = search

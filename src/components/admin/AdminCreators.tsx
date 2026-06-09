@@ -18,8 +18,21 @@ const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> 
   }
 };
 
+type CreatorRequestRow = {
+  id: string;
+  user_id: string;
+  nickname: string;
+  email: string;
+  platform: string;
+  channel_link: string;
+  status: string;
+  created_at: string;
+};
+type FunctionErrorPayload = { error?: string };
+const getMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
+
 export default function AdminCreators() {
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<CreatorRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -29,7 +42,7 @@ export default function AdminCreators() {
       const { data, error } = await withTimeout(supabase.from("creator_requests").select("*").order("created_at", { ascending: false }));
       if (error) throw error;
       setRequests(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error loading creator requests:", err);
       toast.error("Error al cargar solicitudes");
     } finally {
@@ -46,18 +59,22 @@ export default function AdminCreators() {
       if (error) throw error;
 
       if (status === "Approved") {
-        const result = await withTimeout((supabase.rpc as any)("admin_toggle_role", {
-          _target_user_id: userId,
-          _role: "content_creator",
-          _add: true,
+        const { data: roleData, error: roleError } = await withTimeout(supabase.functions.invoke("admin-toggle-role", {
+          body: {
+            target_user_id: userId,
+            role: "content_creator",
+            add: true,
+          },
         }));
-        if ((result as any)?.error) throw (result as any).error;
+        if (roleError) throw roleError;
+        const payload = roleData as FunctionErrorPayload | null;
+        if (payload?.error) throw new Error(payload.error);
       }
 
       toast.success(`Solicitud ${status === "Approved" ? "aprobada" : "rechazada"}`);
       await fetchRequests();
-    } catch (err: any) {
-      toast.error(err?.message || "Error al procesar solicitud");
+    } catch (err: unknown) {
+      toast.error(getMessage(err, "Error al procesar solicitud"));
     } finally {
       setProcessingId(null);
     }

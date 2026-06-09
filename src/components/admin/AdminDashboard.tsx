@@ -2,6 +2,18 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
+const withTimeout = async <T,>(promise: PromiseLike<T>, ms = 12000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("La carga tardó demasiado")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
+};
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     players: 0,
@@ -13,8 +25,8 @@ export default function AdminDashboard() {
     const loadStats = async () => {
       try {
         const [profilesRes, clansRes] = await Promise.all([
-          supabase.from("profiles").select("*", { count: "exact", head: true }),
-          supabase.from("clans").select("*", { count: "exact", head: true }),
+          withTimeout(supabase.from("profiles").select("*", { count: "exact", head: true })),
+          withTimeout(supabase.from("clans").select("*", { count: "exact", head: true })),
         ]);
 
         setStats({
