@@ -54,10 +54,10 @@ Deno.serve(async (req) => {
     }
 
     const result = add
-      ? await admin.from("user_roles").insert({ user_id: targetUserId, role }).select("role").single()
+      ? await admin.from("user_roles").upsert({ user_id: targetUserId, role }, { onConflict: "user_id,role", ignoreDuplicates: true })
       : await admin.from("user_roles").delete().eq("user_id", targetUserId).eq("role", role);
 
-    if (result.error && !result.error.message.toLowerCase().includes("duplicate")) {
+    if (result.error) {
       return json({ error: result.error.message }, 500);
     }
 
