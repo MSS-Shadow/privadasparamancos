@@ -44,25 +44,27 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", caller.id);
     if (rolesError) return json({ error: rolesError.message }, 500);
-    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin");
+    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin") || mainAdminEmails.includes((caller.email || "").toLowerCase());
     if (!isAdmin) return json({ error: "No tienes permisos de admin" }, 403);
 
-    const cleanup = [
-      admin.from("user_roles").delete().eq("user_id", targetUserId),
-      admin.from("clan_join_requests").delete().eq("user_id", targetUserId),
-      admin.from("clan_leader_requests").delete().eq("user_id", targetUserId),
-      admin.from("clan_members").delete().eq("user_id", targetUserId),
-      admin.from("creator_requests").delete().eq("user_id", targetUserId),
-      admin.from("reports").delete().eq("reporter_user_id", targetUserId),
-      admin.from("scrim_participants").delete().eq("user_id", targetUserId),
-      admin.from("tournament_registrations").delete().eq("user_id", targetUserId),
-      admin.from("tournament_waiting_list").delete().eq("user_id", targetUserId),
-      admin.from("verification_requests").delete().eq("user_id", targetUserId),
-      admin.from("profiles").delete().eq("user_id", targetUserId),
+    const cleanupSteps = [
+      { table: "user_roles", column: "user_id" },
+      { table: "clan_join_requests", column: "user_id" },
+      { table: "clan_leader_requests", column: "user_id" },
+      { table: "clan_members", column: "user_id" },
+      { table: "creator_requests", column: "user_id" },
+      { table: "reports", column: "reporter_user_id" },
+      { table: "scrim_participants", column: "user_id" },
+      { table: "tournament_registrations", column: "user_id" },
+      { table: "tournament_waiting_list", column: "user_id" },
+      { table: "verification_requests", column: "user_id" },
+      { table: "profiles", column: "user_id" },
     ];
-    const cleanupResults = await Promise.all(cleanup);
-    const cleanupError = cleanupResults.find((result: any) => result.error)?.error;
-    if (cleanupError) return json({ error: cleanupError.message }, 500);
+
+    for (const step of cleanupSteps) {
+      const { error } = await admin.from(step.table).delete().eq(step.column, targetUserId);
+      if (error) return json({ error: `No se pudo limpiar ${step.table}: ${error.message}` }, 500);
+    }
 
     const { error: delErr } = await admin.auth.admin.deleteUser(targetUserId);
     if (delErr && !delErr.message.toLowerCase().includes("not found")) return json({ error: delErr.message }, 500);
