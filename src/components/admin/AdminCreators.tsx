@@ -46,12 +46,15 @@ export default function AdminCreators() {
       if (error) throw error;
 
       if (status === "Approved") {
-        const result = await withTimeout((supabase.rpc as any)("admin_toggle_role", {
-          _target_user_id: userId,
-          _role: "content_creator",
-          _add: true,
+        const { data: roleData, error: roleError } = await withTimeout(supabase.functions.invoke("admin-toggle-role", {
+          body: {
+            target_user_id: userId,
+            role: "content_creator",
+            add: true,
+          },
         }));
-        if ((result as any)?.error) throw (result as any).error;
+        if (roleError) throw roleError;
+        if ((roleData as any)?.error) throw new Error((roleData as any).error);
       }
 
       toast.success(`Solicitud ${status === "Approved" ? "aprobada" : "rechazada"}`);

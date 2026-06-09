@@ -94,17 +94,15 @@ export default function AdminClanLeaderRequests() {
           if (clanError) throw clanError;
         }
 
-        const roleResult = await withTimeout((supabase.rpc as any)("admin_toggle_role", {
-          _target_user_id: req.user_id,
-          _role: "clan_leader",
-          _add: true,
+        const { data: roleData, error: roleError } = await withTimeout(supabase.functions.invoke("admin-toggle-role", {
+          body: {
+            target_user_id: req.user_id,
+            role: "clan_leader",
+            add: true,
+          },
         }));
-        if ((roleResult as any)?.error) throw (roleResult as any).error;
-
-        // Actualizar perfil
-        await withTimeout((supabase.from as any)("profiles")
-          .update({ is_clan_leader: true })
-          .eq("user_id", req.user_id));
+        if (roleError) throw roleError;
+        if ((roleData as any)?.error) throw new Error((roleData as any).error);
 
         toast.success(`✅ ${req.nickname} es ahora líder del clan "${req.clan_name}"`);
       } else {
