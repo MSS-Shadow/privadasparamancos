@@ -24,6 +24,7 @@ import AdminSmurfDetection from "@/components/admin/AdminSmurfDetection";
 import AdminModerationLog from "@/components/admin/AdminModerationLog";
 import AdminBackup from "@/components/admin/AdminBackup";
 import AdminSiteConfig from "@/components/admin/AdminSiteConfig";
+import AdminPushSender from "@/components/admin/AdminPushSender";
 
 export default function AdminPage() {
   const { isAdmin, loading } = useAuth();
@@ -99,6 +100,7 @@ export default function AdminPage() {
             <TabsTrigger value="moderation">🛡️ Moderación</TabsTrigger>
             <TabsTrigger value="backup">💾 Respaldo</TabsTrigger>
             <TabsTrigger value="site-config">⚙️ Config</TabsTrigger>
+            <TabsTrigger value="push">🔔 Push</TabsTrigger>
           </TabsList>
         </div>
 
@@ -120,6 +122,7 @@ export default function AdminPage() {
           <TabsContent value="moderation"><AdminModerationLog /></TabsContent>
           <TabsContent value="backup"><AdminBackup /></TabsContent>
           <TabsContent value="site-config"><AdminSiteConfig /></TabsContent>
+          <TabsContent value="push"><AdminPushSender /></TabsContent>
         </div>
       </Tabs>
     </div>

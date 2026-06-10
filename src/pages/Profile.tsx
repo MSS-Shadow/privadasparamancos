@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { User, Save, LogOut, RefreshCw, ShieldCheck } from "lucide-react";
+import { User, Save, LogOut, RefreshCw, ShieldCheck, Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const profileSchema = z.object({
   nickname: z.string().trim().min(2).max(50),
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   });
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const push = usePushNotifications();
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -208,6 +210,35 @@ export default function ProfilePage() {
         <div className="text-xs text-muted-foreground pt-2">
           Registrado: {new Date(profile.created_at).toLocaleDateString("es")}
         </div>
+
+        {push.isSupported && (
+          <div className="pt-2 border-t border-border">
+            <label className="text-sm text-muted-foreground">Notificaciones push</label>
+            <div className="mt-2 flex items-center justify-between gap-3 p-3 bg-muted/50 rounded-lg border border-border">
+              <div className="flex items-center gap-2">
+                {push.isSubscribed ? (
+                  <Bell className="h-5 w-5 text-green-500" />
+                ) : (
+                  <BellOff className="h-5 w-5 text-muted-foreground" />
+                )}
+                <span className="text-sm">
+                  {push.isSubscribed ? "Activadas" : "Desactivadas"}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant={push.isSubscribed ? "outline" : "default"}
+                onClick={push.isSubscribed ? push.unsubscribe : push.subscribe}
+                disabled={push.loading}
+              >
+                {push.isSubscribed ? "Desactivar" : "Activar"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Recibí avisos de nuevas privadas, torneos y anuncios.
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-3 pt-4">
           <Button onClick={handleSave} disabled={saving} className="flex-1">
