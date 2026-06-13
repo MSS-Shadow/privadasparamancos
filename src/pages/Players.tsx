@@ -26,7 +26,6 @@ interface Player {
 }
 
 type ProfilePlayerRow = Omit<Player, "tournaments">;
-type RegistrationRow = { nickname: string | null };
 
 const getMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
 
@@ -38,22 +37,19 @@ export default function PlayersPage() {
   const fetchPlayers = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
-      const [{ data: profiles, error: profilesError }, { data: regs, error: regsError }] = await Promise.all([
-        withTimeout(supabase.from("profiles").select("nickname, player_id, platform, clan, verified").eq("status", "active")),
-        withTimeout(supabase.from("tournament_registrations").select("nickname")),
-      ]);
+      const { data: profiles, error: profilesError } = await withTimeout(
+        supabase.from("profiles").select("nickname, player_id, platform, clan")
+      );
 
       if (profilesError) throw profilesError;
-      if (regsError) throw regsError;
 
-      const regCount = new Map<string, number>();
-      (regs as RegistrationRow[] | null)?.forEach((r) => {
-        if (r.nickname) regCount.set(r.nickname, (regCount.get(r.nickname) || 0) + 1);
-      });
-
-      const list: Player[] = ((profiles ?? []) as ProfilePlayerRow[]).map((p) => ({
-        ...p,
-        tournaments: regCount.get(p.nickname) || 0,
+      const list: Player[] = ((profiles ?? []) as Omit<ProfilePlayerRow, "verified">[]).map((p) => ({
+        nickname: p.nickname,
+        player_id: p.player_id,
+        platform: p.platform,
+        clan: p.clan,
+        verified: false,
+        tournaments: 0,
       }));
 
       setPlayers(list.sort((a, b) => b.tournaments - a.tournaments));
