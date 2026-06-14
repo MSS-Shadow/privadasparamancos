@@ -51,7 +51,7 @@ export default function VerifyAccountPage() {
         user_id: user.id,
         nickname: profile.nickname,
         player_id: profile.player_id,
-        email: profile.email,
+        email: user.email ?? "",
         profile_screenshot_url: profileUrl,
         id_screenshot_url: idUrl,
         additional_doc_url: additionalUrl,

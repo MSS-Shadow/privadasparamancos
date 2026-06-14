@@ -48,7 +48,7 @@ export default function CreatorRequest() {
       const { error } = await supabase.from("creator_requests").insert({
         user_id: user.id,
         nickname: profile.nickname,
-        email: profile.email,
+        email: user.email ?? "",
         platform: form.platform,
         channel_link: form.channel_link.trim(),
       });
@@ -86,7 +86,7 @@ export default function CreatorRequest() {
           </div>
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Email</label>
-            <Input value={profile?.email ?? ""} disabled />
+            <Input value={user?.email ?? ""} disabled />
           </div>
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Plataforma de Streaming</label>

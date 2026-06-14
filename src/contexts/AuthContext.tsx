@@ -63,31 +63,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await withTimeout(supabase
         .from("profiles")
-        .select("*")
+        .select("id, user_id, nickname, player_id, platform, country, clan, verified, is_clan_leader, status, created_at, updated_at")
         .eq("user_id", userId)
         .maybeSingle());
 
       if (error) console.warn("Error fetching profile:", error.message);
-      setProfile(data || null);
+      setProfile((data as any) || null);
     } catch (err) {
       console.warn("fetchProfile failed:", err);
       setProfile(null);
     }
   };
 
-  const fetchRoles = async (userId: string, email?: string | null) => {
-    const adminEmails = ["portadormato@gmail.com"];
-    const emailAdminRole = email && adminEmails.includes(email.toLowerCase()) ? ["admin"] : [];
-
+  const fetchRoles = async (userId: string) => {
     try {
       const { data, error } = await withTimeout(
         supabase.from("user_roles").select("role").eq("user_id", userId)
       );
       if (error) throw error;
-      setRoles(Array.from(new Set([...(data ?? []).map((r: any) => r.role), ...emailAdminRole])));
+      setRoles(Array.from(new Set((data ?? []).map((r: any) => r.role))));
     } catch (err) {
       console.warn("fetchRoles failed:", err);
-      setRoles(emailAdminRole);
+      setRoles([]);
     }
   };
 
@@ -95,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       await ensureProfile(user);
       await fetchProfile(user.id);
-      await fetchRoles(user.id, user.email);
+      await fetchRoles(user.id);
     }
   };
 
@@ -111,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (nextSession?.user) {
         await ensureProfile(nextSession.user).catch((err) => console.warn("ensureProfile failed:", err));
-        await Promise.all([fetchProfile(nextSession.user.id), fetchRoles(nextSession.user.id, nextSession.user.email)]);
+        await Promise.all([fetchProfile(nextSession.user.id), fetchRoles(nextSession.user.id)]);
       } else {
         setProfile(null);
         setRoles([]);

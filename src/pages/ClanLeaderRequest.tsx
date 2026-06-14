@@ -56,7 +56,7 @@ export default function ClanLeaderRequest() {
         nickname: profile.nickname,
         player_id: profile.player_id,
         clan_name: form.clan_name.trim(),
-        email: profile.email,
+        email: user.email ?? "",
         description: form.description.trim() || null,
         status: "pending",
       });

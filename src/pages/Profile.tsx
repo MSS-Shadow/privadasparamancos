@@ -129,7 +129,7 @@ export default function ProfilePage() {
         {/* Email (solo lectura) */}
         <div>
           <label className="text-sm text-muted-foreground">Email</label>
-          <Input value={profile.email || ""} disabled className="mt-1" />
+          <Input value={user?.email || ""} disabled className="mt-1" />
         </div>
 
         {/* Nickname */}

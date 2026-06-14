@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { RefreshCw, ExternalLink } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import SignedFileLink from "@/components/SignedFileLink";
 
 export default function AdminReports() {
   const [reports, setReports] = useState<any[]>([]);
@@ -83,9 +84,9 @@ export default function AdminReports() {
                   <TableCell className="text-xs max-w-[200px] truncate">{r.description}</TableCell>
                   <TableCell>
                     {r.screenshot_url ? (
-                      <a href={r.screenshot_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs inline-flex items-center gap-0.5">
-                        <ExternalLink className="h-3 w-3" /> Ver
-                      </a>
+                      <SignedFileLink urlOrPath={r.screenshot_url} className="text-primary hover:underline text-xs inline-flex items-center gap-0.5">
+                        Ver
+                      </SignedFileLink>
                     ) : "—"}
                   </TableCell>
                   <TableCell>
