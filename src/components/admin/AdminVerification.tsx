@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { RefreshCw, ExternalLink } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import SignedFileLink from "@/components/SignedFileLink";
 
 export default function AdminVerification() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -74,19 +75,19 @@ export default function AdminVerification() {
                   <TableCell>
                     <div className="flex gap-1">
                       {r.profile_screenshot_url && (
-                        <a href={r.profile_screenshot_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs inline-flex items-center gap-0.5">
-                          <ExternalLink className="h-3 w-3" /> Perfil
-                        </a>
+                        <SignedFileLink urlOrPath={r.profile_screenshot_url} className="text-primary hover:underline text-xs inline-flex items-center gap-0.5">
+                          Perfil
+                        </SignedFileLink>
                       )}
                       {r.id_screenshot_url && (
-                        <a href={r.id_screenshot_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs inline-flex items-center gap-0.5">
-                          <ExternalLink className="h-3 w-3" /> ID
-                        </a>
+                        <SignedFileLink urlOrPath={r.id_screenshot_url} className="text-primary hover:underline text-xs inline-flex items-center gap-0.5">
+                          ID
+                        </SignedFileLink>
                       )}
                       {r.additional_doc_url && (
-                        <a href={r.additional_doc_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs inline-flex items-center gap-0.5">
-                          <ExternalLink className="h-3 w-3" /> Extra
-                        </a>
+                        <SignedFileLink urlOrPath={r.additional_doc_url} className="text-primary hover:underline text-xs inline-flex items-center gap-0.5">
+                          Extra
+                        </SignedFileLink>
                       )}
                     </div>
                   </TableCell>
