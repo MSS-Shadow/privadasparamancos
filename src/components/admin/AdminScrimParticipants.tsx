@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,9 +65,14 @@ export default function AdminScrimParticipants() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 className="text-2xl font-bold text-foreground">Participantes de Scrims</h2>
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="h-4 w-4 mr-1" /> Exportar CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild size="sm">
+            <Link to="/scrims"><Plus className="h-4 w-4 mr-1" /> Crear Scrim</Link>
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" /> Exportar CSV
+          </Button>
+        </div>
       </div>
       {participants.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">No hay participantes de scrims.</p>
