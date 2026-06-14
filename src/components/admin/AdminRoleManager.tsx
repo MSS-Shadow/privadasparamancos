@@ -10,8 +10,7 @@ import { Search, RefreshCw } from "lucide-react";
 const ALL_ROLES = ["admin", "clan_leader", "content_creator"] as const;
 type ManagedRole = typeof ALL_ROLES[number];
 type UserRow = { id: string; user_id: string; email: string | null; nickname: string | null; is_clan_leader: boolean | null; roles: string[] };
-type RoleRow = { user_id: string; role: string | null };
-type FunctionErrorPayload = { error?: string };
+type FunctionErrorPayload = { error?: string; users?: UserRow[] };
 
 const getMessage = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback;
 
@@ -36,29 +35,11 @@ export default function AdminRoleManager() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data: profiles, error } = await withTimeout(supabase
-        .from("profiles")
-        .select("id, user_id, email, nickname, is_clan_leader")
-        .order("created_at", { ascending: false }));
-
+      const { data, error } = await withTimeout(supabase.functions.invoke("admin-list-users"));
       if (error) throw error;
-
-      const { data: allRoles } = await withTimeout(supabase
-        .from("user_roles")
-        .select("user_id, role"));
-
-      const roleMap: Record<string, string[]> = {};
-      ((allRoles || []) as RoleRow[]).forEach((r) => {
-        if (!roleMap[r.user_id]) roleMap[r.user_id] = [];
-        if (r.role) roleMap[r.user_id].push(r.role);
-      });
-
-      const processed = (profiles || []).map((u) => ({
-        ...u,
-        roles: roleMap[u.user_id] || [],
-      }));
-
-      setUsers(processed);
+      const payload = data as FunctionErrorPayload | null;
+      if (payload?.error) throw new Error(payload.error);
+      setUsers(payload?.users ?? []);
     } catch (err: unknown) {
       console.error("Error fetching users:", err);
       toast.error("Error al cargar usuarios");
