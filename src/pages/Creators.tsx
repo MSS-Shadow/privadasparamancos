@@ -46,7 +46,7 @@ export default function CreatorsPage() {
     const { error } = await supabase.from("creator_requests").insert({
       user_id: user.id,
       nickname: profile.nickname,
-      email: profile.email,
+      email: user.email ?? "",
       platform: form.platform,
       channel_link: form.channel_link.trim(),
     });
