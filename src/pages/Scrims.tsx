@@ -11,9 +11,9 @@ import { toast } from "sonner";
 
 interface Scrim {
   id: string;
-  name: string;
+  title: string;
   mode: string;
-  scheduled_at: string;
+  date: string;
   stream_link: string | null;
   status: string;
   max_players: number;
@@ -27,7 +27,7 @@ export default function ScrimsPage() {
   const [scrims, setScrims] = useState<Scrim[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: "", mode: "Squad", scheduled_at: "", stream_link: "" });
+  const [form, setForm] = useState({ title: "", mode: "Squad", date: "", stream_link: "" });
   const [creating, setCreating] = useState(false);
 
   const canCreate = roles.includes("admin") || roles.includes("content_creator");
@@ -35,20 +35,13 @@ export default function ScrimsPage() {
   const fetchScrims = async () => {
     setLoading(true);
     try {
-      const { data: scrimsData } = await supabase.from("scrims").select("*").order("scheduled_at", { ascending: false });
+      const { data: scrimsData } = await supabase.from("scrims").select("*").order("date", { ascending: false });
       const { data: participants } = await supabase.from("scrim_participants").select("scrim_id");
       if (scrimsData) {
-        const creatorIds = Array.from(new Set(scrimsData.map((s: any) => s.created_by).filter(Boolean)));
-        let nickMap: Record<string, string> = {};
-        if (creatorIds.length) {
-          const { data: profs } = await supabase.from("profiles").select("user_id, nickname").in("user_id", creatorIds);
-          profs?.forEach((p: any) => { nickMap[p.user_id] = p.nickname; });
-        }
         const counts: Record<string, number> = {};
         participants?.forEach((p: any) => { counts[p.scrim_id] = (counts[p.scrim_id] || 0) + 1; });
         setScrims(scrimsData.map((s: any) => ({
           ...s,
-          creator_nickname: nickMap[s.created_by] ?? "—",
           participantCount: counts[s.id] || 0,
         })));
       }
@@ -80,27 +73,29 @@ export default function ScrimsPage() {
   };
 
   const createScrim = async () => {
-    if (!form.name || !form.scheduled_at) { toast.error("Título y fecha son obligatorios"); return; }
+    if (!form.title || !form.date) { toast.error("Título y fecha son obligatorios"); return; }
+    if (!profile?.nickname) { toast.error("Necesitas un perfil con nickname"); return; }
     setCreating(true);
     const { error } = await supabase.from("scrims").insert({
-      name: form.name,
+      title: form.title,
       mode: form.mode,
-      scheduled_at: new Date(form.scheduled_at).toISOString(),
+      date: new Date(form.date).toISOString(),
       stream_link: form.stream_link || null,
       created_by: user!.id,
+      creator_nickname: profile.nickname,
     } as any);
     setCreating(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Scrim creado");
     setShowCreate(false);
-    setForm({ name: "", mode: "Squad", scheduled_at: "", stream_link: "" });
+    setForm({ title: "", mode: "Squad", date: "", stream_link: "" });
     fetchScrims();
   };
 
   const now = new Date();
   const live = scrims.filter((s) => s.status === "live");
-  const upcoming = scrims.filter((s) => s.status === "upcoming" && new Date(s.scheduled_at) > now);
-  const history = scrims.filter((s) => s.status === "completed" || (s.status !== "live" && new Date(s.scheduled_at) <= now));
+  const upcoming = scrims.filter((s) => s.status === "upcoming" && new Date(s.date) > now);
+  const history = scrims.filter((s) => s.status === "completed" || (s.status !== "live" && new Date(s.date) <= now));
 
   if (loading) return <div className="text-center py-20 text-muted-foreground">Cargando...</div>;
 
@@ -122,7 +117,7 @@ export default function ScrimsPage() {
               <Swords className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-foreground truncate">{s.name}</h3>
+              <h3 className="font-semibold text-foreground truncate">{s.title}</h3>
               <p className="text-xs text-muted-foreground truncate">
                 por <Link to={`/player/${encodeURIComponent(s.creator_nickname)}`} className="text-foreground hover:text-primary transition-colors">{s.creator_nickname}</Link> · {s.mode}
               </p>
@@ -142,7 +137,7 @@ export default function ScrimsPage() {
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
           <span className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
-            {new Date(s.scheduled_at).toLocaleDateString("es", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+            {new Date(s.date).toLocaleDateString("es", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
           </span>
           <span className="flex items-center gap-1.5 tabular-nums">
             <Users className="h-3.5 w-3.5" /> {s.participantCount}/{s.max_players}
@@ -236,7 +231,7 @@ export default function ScrimsPage() {
           <div className="space-y-3">
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Título</label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Scrim Nocturno #1" />
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Scrim Nocturno #1" />
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Modo</label>
@@ -252,7 +247,7 @@ export default function ScrimsPage() {
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Fecha y Hora</label>
-              <Input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
+              <Input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Link del Stream (opcional)</label>
