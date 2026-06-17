@@ -26,17 +26,23 @@ export default function AdminScrimParticipants() {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: scrims } = await supabase.from("scrims").select("id, title, creator_nickname");
+    const { data: scrims } = await supabase.from("scrims").select("id, name, created_by");
     const { data: parts } = await supabase.from("scrim_participants").select("*").order("joined_at", { ascending: false });
 
     if (scrims && parts) {
+      const creatorIds = Array.from(new Set(scrims.map((s: any) => s.created_by).filter(Boolean)));
+      let nickMap: Record<string, string> = {};
+      if (creatorIds.length) {
+        const { data: profs } = await supabase.from("profiles").select("user_id, nickname").in("user_id", creatorIds);
+        profs?.forEach((p: any) => { nickMap[p.user_id] = p.nickname; });
+      }
       const scrimMap = new Map(scrims.map((s: any) => [s.id, s]));
       const mapped: ScrimParticipant[] = parts.map((p: any) => {
         const scrim = scrimMap.get(p.scrim_id) as any;
         return {
           ...p,
-          scrim_title: scrim?.title ?? "Desconocido",
-          creator_nickname: scrim?.creator_nickname ?? "—",
+          scrim_title: scrim?.name ?? "Desconocido",
+          creator_nickname: (scrim && nickMap[scrim.created_by]) ?? "—",
         };
       });
       setParticipants(mapped);
