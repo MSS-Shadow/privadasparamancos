@@ -26,11 +26,11 @@ export default function HomePage() {
           supabase.from("tournaments").select("*", { count: "exact", head: true }),
           supabase.from("scrims").select("*", { count: "exact", head: true }),
           supabase.from("announcements").select("*").order("created_at", { ascending: false }).limit(3),
-          supabase.from("scrims").select("id,title,mode,creator_nickname,stream_link").eq("status", "live").limit(3),
+          supabase.from("scrims").select("id,name,mode,created_by,stream_link").eq("status", "live").limit(3),
           supabase.from("tournaments").select("id,name,mode,date,max_players").gte("date", nowIso).order("date", { ascending: true }).limit(3),
           supabase.from("profiles").select("nickname,verified,created_at").order("created_at", { ascending: false }).limit(8),
           supabase.from("clans").select("name,leader_nickname,created_at").order("created_at", { ascending: false }).limit(4),
-          supabase.from("scrims").select("title,creator_nickname,created_at").order("created_at", { ascending: false }).limit(4),
+          supabase.from("scrims").select("name,created_by,created_at").order("created_at", { ascending: false }).limit(4),
           supabase.from("tournament_champions").select("team_name,tournament_name,created_at").order("created_at", { ascending: false }).limit(4),
         ]);
 
@@ -41,8 +41,19 @@ export default function HomePage() {
           scrims: (scrimRes as any).count ?? 0,
         });
         setAnnouncements(annRes.data ?? []);
-        setLiveScrims(liveRes.data ?? []);
         setUpcomingTournaments(upTourRes.data ?? []);
+
+        // Resolve creator nicknames for live + recent scrims
+        const scrimCreatorIds = Array.from(new Set([
+          ...(liveRes.data ?? []).map((s: any) => s.created_by),
+          ...(newScrimsRes.data ?? []).map((s: any) => s.created_by),
+        ].filter(Boolean)));
+        const nickMap: Record<string, string> = {};
+        if (scrimCreatorIds.length) {
+          const { data: profs } = await supabase.from("profiles").select("user_id, nickname").in("user_id", scrimCreatorIds);
+          profs?.forEach((p: any) => { nickMap[p.user_id] = p.nickname; });
+        }
+        setLiveScrims((liveRes.data ?? []).map((s: any) => ({ ...s, creator_nickname: nickMap[s.created_by] ?? "—" })));
 
         // Build a unified activity feed from recent rows
         const feed: { type: string; title: string; subtitle?: string; date: string; href?: string }[] = [];
@@ -77,8 +88,8 @@ export default function HomePage() {
         (newScrimsRes.data ?? []).forEach((s: any) => {
           feed.push({
             type: "scrim",
-            title: `Nueva scrim: ${s.title}`,
-            subtitle: `Por ${s.creator_nickname}`,
+            title: `Nueva scrim: ${s.name}`,
+            subtitle: `Por ${nickMap[s.created_by] ?? "—"}`,
             date: s.created_at,
             href: "/scrims",
           });
@@ -237,7 +248,7 @@ export default function HomePage() {
                         <span className="live-dot" /> LIVE
                       </span>
                       <div className="min-w-0">
-                        <p className="font-semibold text-foreground truncate">{s.title}</p>
+                        <p className="font-semibold text-foreground truncate">{s.name}</p>
                         <p className="text-xs text-muted-foreground truncate">{s.mode} · por {s.creator_nickname}</p>
                       </div>
                     </div>
