@@ -7,27 +7,52 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 interface Scrim {
   id: string;
-  title: string;
-  mode: string;
-  date: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  room_id: string;
+  room_password: string | null;
+  mode: string | null;
+  scheduled_at: string;
   stream_link: string | null;
   status: string;
   max_players: number;
-  creator_nickname: string;
+  current_players: number;
   created_by: string;
+  creatorNickname: string;
   participantCount: number;
 }
+
+const createSlug = (name: string) => {
+  const base = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "scrim";
+  return `${base}-${Math.random().toString(36).slice(2, 8)}`;
+};
 
 export default function ScrimsPage() {
   const { user, profile, roles } = useAuth();
   const [scrims, setScrims] = useState<Scrim[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ title: "", mode: "Squad", date: "", stream_link: "" });
+  const [form, setForm] = useState({
+    name: "",
+    room_id: "",
+    max_players: "120",
+    scheduled_at: "",
+    mode: "Squad",
+    stream_link: "",
+    room_password: "",
+    description: "",
+  });
   const [creating, setCreating] = useState(false);
 
   const canCreate = roles.includes("admin") || roles.includes("content_creator");
@@ -35,16 +60,25 @@ export default function ScrimsPage() {
   const fetchScrims = async () => {
     setLoading(true);
     try {
-      const { data: scrimsData } = await supabase.from("scrims").select("*").order("date", { ascending: false });
+      const { data: scrimsData, error: scrimsError } = await supabase.from("scrims").select("*").order("scheduled_at", { ascending: false });
+      if (scrimsError) throw scrimsError;
       const { data: participants } = await supabase.from("scrim_participants").select("scrim_id");
       if (scrimsData) {
         const counts: Record<string, number> = {};
         participants?.forEach((p: any) => { counts[p.scrim_id] = (counts[p.scrim_id] || 0) + 1; });
+        const creatorIds = Array.from(new Set(scrimsData.map((s: any) => s.created_by).filter(Boolean)));
+        const { data: profilesData } = creatorIds.length
+          ? await supabase.from("profiles").select("user_id,nickname").in("user_id", creatorIds)
+          : { data: [] as any[] };
+        const nickMap = new Map((profilesData ?? []).map((p: any) => [p.user_id, p.nickname]));
         setScrims(scrimsData.map((s: any) => ({
           ...s,
+          creatorNickname: nickMap.get(s.created_by) ?? "—",
           participantCount: counts[s.id] || 0,
         })));
       }
+    } catch (error: any) {
+      toast.error(error.message ?? "No se pudieron cargar las scrims");
     } finally {
       setLoading(false);
     }
@@ -73,29 +107,44 @@ export default function ScrimsPage() {
   };
 
   const createScrim = async () => {
-    if (!form.title || !form.date) { toast.error("Título y fecha son obligatorios"); return; }
-    if (!profile?.nickname) { toast.error("Necesitas un perfil con nickname"); return; }
+    if (!user) { toast.error("Debes iniciar sesión"); return; }
+    if (!form.name.trim() || !form.room_id.trim() || !form.max_players || !form.scheduled_at) {
+      toast.error("Nombre, sala, cupos y fecha son obligatorios");
+      return;
+    }
+    const maxPlayers = Number(form.max_players);
+    if (!Number.isInteger(maxPlayers) || maxPlayers < 1) { toast.error("Cupos máximos inválidos"); return; }
     setCreating(true);
-    const { error } = await supabase.from("scrims").insert({
-      title: form.title,
-      mode: form.mode,
-      date: new Date(form.date).toISOString(),
-      stream_link: form.stream_link || null,
-      created_by: user!.id,
-      creator_nickname: profile.nickname,
-    } as any);
-    setCreating(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Scrim creado");
-    setShowCreate(false);
-    setForm({ title: "", mode: "Squad", date: "", stream_link: "" });
-    fetchScrims();
+    try {
+      const { error } = await supabase.from("scrims").insert({
+        name: form.name.trim(),
+        slug: createSlug(form.name),
+        room_id: form.room_id.trim(),
+        room_password: form.room_password.trim() || null,
+        max_players: maxPlayers,
+        scheduled_at: new Date(form.scheduled_at).toISOString(),
+        mode: form.mode || null,
+        stream_link: form.stream_link.trim() || null,
+        description: form.description.trim() || null,
+        current_players: 0,
+        created_by: user.id,
+      } as any);
+      if (error) throw error;
+      toast.success("Scrim creado");
+      setShowCreate(false);
+      setForm({ name: "", room_id: "", max_players: "120", scheduled_at: "", mode: "Squad", stream_link: "", room_password: "", description: "" });
+      fetchScrims();
+    } catch (error: any) {
+      toast.error(error.message ?? "No se pudo crear el scrim");
+    } finally {
+      setCreating(false);
+    }
   };
 
   const now = new Date();
   const live = scrims.filter((s) => s.status === "live");
-  const upcoming = scrims.filter((s) => s.status === "upcoming" && new Date(s.date) > now);
-  const history = scrims.filter((s) => s.status === "completed" || (s.status !== "live" && new Date(s.date) <= now));
+  const upcoming = scrims.filter((s) => s.status === "upcoming" && new Date(s.scheduled_at) > now);
+  const history = scrims.filter((s) => s.status === "completed" || (s.status !== "live" && new Date(s.scheduled_at) <= now));
 
   if (loading) return <div className="text-center py-20 text-muted-foreground">Cargando...</div>;
 
