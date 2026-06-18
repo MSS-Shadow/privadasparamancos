@@ -166,9 +166,9 @@ export default function ScrimsPage() {
               <Swords className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-foreground truncate">{s.title}</h3>
+              <h3 className="font-semibold text-foreground truncate">{s.name}</h3>
               <p className="text-xs text-muted-foreground truncate">
-                por <Link to={`/player/${encodeURIComponent(s.creator_nickname)}`} className="text-foreground hover:text-primary transition-colors">{s.creator_nickname}</Link> · {s.mode}
+                por <Link to={`/player/${encodeURIComponent(s.creatorNickname)}`} className="text-foreground hover:text-primary transition-colors">{s.creatorNickname}</Link> · {s.mode ?? "Sin modo"}
               </p>
             </div>
           </div>
@@ -186,7 +186,7 @@ export default function ScrimsPage() {
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
           <span className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
-            {new Date(s.date).toLocaleDateString("es", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+            {new Date(s.scheduled_at).toLocaleDateString("es", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
           </span>
           <span className="flex items-center gap-1.5 tabular-nums">
             <Users className="h-3.5 w-3.5" /> {s.participantCount}/{s.max_players}
@@ -279,8 +279,22 @@ export default function ScrimsPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-sm text-muted-foreground mb-1 block">Título</label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Scrim Nocturno #1" />
+              <label className="text-sm text-muted-foreground mb-1 block">Nombre</label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Scrim Nocturno #1" />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Código de sala</label>
+              <Input value={form.room_id} onChange={(e) => setForm({ ...form, room_id: e.target.value })} placeholder="WARZONE-123" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Cupos máximos</label>
+                <Input type="number" min="1" value={form.max_players} onChange={(e) => setForm({ ...form, max_players: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground mb-1 block">Contraseña</label>
+                <Input value={form.room_password} onChange={(e) => setForm({ ...form, room_password: e.target.value })} placeholder="Opcional" />
+              </div>
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Modo</label>
@@ -296,11 +310,15 @@ export default function ScrimsPage() {
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Fecha y Hora</label>
-              <Input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              <Input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">Link del Stream (opcional)</label>
               <Input value={form.stream_link} onChange={(e) => setForm({ ...form, stream_link: e.target.value })} placeholder="https://twitch.tv/..." />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Descripción (opcional)</label>
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Reglas, mapa o detalles del lobby" />
             </div>
           </div>
           <Button onClick={createScrim} disabled={creating} className="w-full mt-2">
