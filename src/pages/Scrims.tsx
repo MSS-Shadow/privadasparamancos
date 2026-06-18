@@ -272,7 +272,7 @@ export default function ScrimsPage() {
       </section>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Crear Scrim</DialogTitle>
             <DialogDescription>Configura los detalles del scrim.</DialogDescription>
