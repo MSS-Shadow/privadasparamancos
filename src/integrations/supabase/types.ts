@@ -453,38 +453,53 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
-          creator_nickname: string
-          date: string
+          current_players: number
+          description: string | null
           id: string
           max_players: number
-          mode: string
+          mode: string | null
+          name: string
+          room_id: string
+          room_password: string | null
+          scheduled_at: string
+          slug: string
           status: string
           stream_link: string | null
-          title: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           created_by: string
-          creator_nickname: string
-          date: string
+          current_players?: number
+          description?: string | null
           id?: string
           max_players?: number
-          mode: string
+          mode?: string | null
+          name: string
+          room_id: string
+          room_password?: string | null
+          scheduled_at: string
+          slug: string
           status?: string
           stream_link?: string | null
-          title: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string
-          creator_nickname?: string
-          date?: string
+          current_players?: number
+          description?: string | null
           id?: string
           max_players?: number
-          mode?: string
+          mode?: string | null
+          name?: string
+          room_id?: string
+          room_password?: string | null
+          scheduled_at?: string
+          slug?: string
           status?: string
           stream_link?: string | null
-          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
