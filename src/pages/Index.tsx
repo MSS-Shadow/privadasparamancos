@@ -10,6 +10,7 @@ export default function HomePage() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [liveScrims, setLiveScrims] = useState<any[]>([]);
   const [upcomingTournaments, setUpcomingTournaments] = useState<any[]>([]);
+  const [nextTournamentLoading, setNextTournamentLoading] = useState(true);
   const [activity, setActivity] = useState<{ type: string; title: string; subtitle?: string; date: string; href?: string }[]>([]);
 
   useEffect(() => {
@@ -103,6 +104,8 @@ export default function HomePage() {
         setActivity(feed.slice(0, 8));
       } catch (err) {
         console.error("Error cargando datos:", err);
+      } finally {
+        setNextTournamentLoading(false);
       }
     };
     loadData();
@@ -141,6 +144,27 @@ export default function HomePage() {
     if (h < 24) return `hace ${h}h`;
     const d = Math.floor(h / 24);
     return `hace ${d}d`;
+  };
+
+  const nextTournament = upcomingTournaments[0];
+  const nextTournamentHref = nextTournament
+    ? `/tournaments/${encodeURIComponent(nextTournament.name)}`
+    : "/tournaments";
+
+  const handleQuieroJugar = () => {
+    try {
+      const gtag = (window as any).gtag;
+      if (typeof gtag === "function") {
+        gtag("event", "click_quiero_jugar", {
+          event_category: "engagement",
+          event_label: nextTournament?.name ?? "sin_torneo",
+          tournament_id: nextTournament?.id ?? null,
+          destination: nextTournamentHref,
+        });
+      }
+    } catch {
+      /* no-op */
+    }
   };
 
   return (
