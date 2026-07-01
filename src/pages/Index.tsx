@@ -161,10 +161,50 @@ export default function HomePage() {
             Privadas para mancos<br />sin lobbies imposibles.
           </h1>
 
-          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-8">
+          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-6">
             Juega <span className="text-foreground font-semibold">Battle Royale, Resurgimiento y Kill Race</span> con gente tranqui, mayores y jugadores de KD bajo.
             Verificamos cada cuenta manualmente para filtrar sweats.
           </p>
+
+          {/* Próxima privada activa */}
+          <div className="max-w-2xl mx-auto mb-8">
+            {upcomingTournaments[0] ? (
+              <div className="glass-card p-5 flex flex-col sm:flex-row items-center gap-4 text-left border border-primary/30">
+                <div className="p-3 rounded-xl bg-primary/15 text-primary shrink-0">
+                  <Trophy className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0 text-center sm:text-left">
+                  <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">
+                    Próxima privada
+                  </p>
+                  <p className="font-bold text-foreground truncate">{upcomingTournaments[0].name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {upcomingTournaments[0].mode} ·{" "}
+                    {new Date(upcomingTournaments[0].date).toLocaleDateString("es", {
+                      weekday: "long",
+                      day: "2-digit",
+                      month: "long",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {upcomingTournaments[0].max_players
+                      ? ` · ${upcomingTournaments[0].max_players} cupos`
+                      : ""}
+                  </p>
+                </div>
+                <Link
+                  to="/tournaments"
+                  className="glow-button px-5 py-2.5 rounded-xl text-primary-foreground font-semibold text-sm shrink-0"
+                >
+                  Quiero jugar
+                </Link>
+              </div>
+            ) : (
+              <div className="glass-card p-5 text-center text-sm text-muted-foreground">
+                Próximamente — seguinos para enterarte.
+              </div>
+            )}
+          </div>
 
           <div className="flex flex-wrap justify-center gap-4">
             {user ? (
