@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => ({
         background_color: "#0B0E0B",
         theme_color: "#0B0E0B",
         lang: "es",
-        dir: "auto",
+        dir: "auto" as any,
         orientation: "any",
         categories: ["games"],
         display_override: ["window-controls-overlay", "standalone", "browser"],
