@@ -226,9 +226,14 @@
   }
 }
 
-/* Ocultar badge de Lovable */
+/* Ocultar badge de Lovable en toda la app (todas las rutas) */
 [data-lovable-badge],
 #lovable-badge,
-a[href*="lovable.dev"] {
+#lovable-badge-v2,
+a[href*="lovable.dev"],
+a[href*="lovable.app"][class*="badge"],
+iframe[src*="lovable.dev/badge"] {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
